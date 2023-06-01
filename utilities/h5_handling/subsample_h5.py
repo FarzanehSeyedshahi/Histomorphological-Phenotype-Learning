@@ -9,6 +9,7 @@ import os
 main_path = os.path.dirname(os.path.realpath(__file__))
 main_path = '/'.join(main_path.split('/')[:-2])
 sys.path.append(main_path)
+print('main_path', main_path)
 
 from data_manipulation.utils import load_data
 

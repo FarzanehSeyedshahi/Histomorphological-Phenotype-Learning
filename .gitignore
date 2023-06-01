@@ -1,1 +1,6 @@
 *.icloud
+datasets/*
+model*
+results/*
+data_model_output_temp/*
+data_model_output/*
