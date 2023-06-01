@@ -10,6 +10,7 @@ import os
 main_path = os.path.dirname(os.path.realpath(__file__))
 main_path = '/'.join(main_path.split('/')[:-2])
 sys.path.append(main_path)
+from tqdm import tqdm
 
 # Folder permissions for cluster.
 os.umask(0o002)
@@ -30,7 +31,7 @@ def h5_overlap_meta_individuals(h5_file, matching_field, meta_individuals):
     with h5py.File(h5_file, 'r') as content:
         h5_individual_prev = ''
         match_flag         = False
-        for index_h5 in range(content[matching_field].shape[0]):
+        for index_h5 in tqdm(range(content[matching_field].shape[0])):
             h5_individual = content[matching_field][index_h5].decode("utf-8")
             if h5_individual != h5_individual_prev:
                 if h5_individual in meta_individuals:
@@ -135,12 +136,17 @@ override        = args.override
 
 # Read meta data file and list of individuals according to the matching_field.
 frame, meta_individuals = read_meta_data(meta_file, matching_field)
+print('Number of individuals in meta file: %s' % len(meta_individuals))
+print('Number of entries in meta file: %s' % len(frame) )
 
 # Get number of tiles from all individuals in the original H5, <= to the original.
 num_tiles = h5_overlap_meta_individuals(h5_file, matching_field, meta_individuals)
+print('Number of tiles in original H5: %s' % num_tiles)
 
 # Dictionary with keys, shapes, and dtypes.
 key_dict = data_specs(h5_file)
+print('Keys in original H5: %s' % list(key_dict.keys()))
 
 # Create H5 with the list of individuals and the field.
 create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta_individuals, num_tiles, key_dict, override)
+print('Created H5 file: %s' % h5_file.replace('.h5', '_%s.h5' % meta_name))
