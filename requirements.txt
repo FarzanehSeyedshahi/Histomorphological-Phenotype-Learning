@@ -1,5 +1,4 @@
 absl-py==1.2.0
-anndata==0.8.0
 astor==0.8.1
 asttokens==2.0.8
 astunparse==1.6.3
@@ -28,7 +27,6 @@ gitdb==4.0.9
 GitPython==3.1.27
 google-pasta==0.2.0
 grpcio==1.47.0
-h5py==3.7.0
 hdmedians==0.14.2
 idna==3.3
 importlib-metadata==4.12.0
@@ -126,3 +124,5 @@ yaspin==2.2.0
 zipp==3.8.1
 lxml==4.9.1
 kneed==0.8.2
+h5py==3.7.0
+anndata==0.8.0

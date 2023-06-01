@@ -4,6 +4,7 @@ import tensorflow as tf
 import argparse
 import os
 
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 # Folder permissions for cluster.
 os.umask(0o002)
 # H5 File bug over network file system.
@@ -86,12 +87,25 @@ elif 'BarlowTwins' in model:
 	from models.selfsupervised.BarlowTwins import RepresentationsPathology
 
 # Collect dataset.
+print('Collecting dataset: %s' % dataset)
 data = Data(dataset=dataset, marker=marker, patch_h=image_height, patch_w=image_width, n_channels=image_channels, batch_size=batch_size, project_path=dbs_path)
 
 # Run PathologyContrastive Encoder.
 with tf.Graph().as_default():
 	# Instantiate Model.
-    contrast_pathology = RepresentationsPathology(data=data, z_dim=z_dim, layers=layers, beta_1=beta_1, init=init, regularizer_scale=regularizer_scale, spectral=spectral, attention=attention,
+	print('Running %s model.' % model)
+	print('Image size: %s' % image_height)
+	print('Layers: %s' % layers)
+	print('Spectral: %s' % spectral)
+	print('Attention: %s' % attention)
+	print('Init: %s' % init)
+	print('Regularizer: %s' % regularizer_scale)
+	print('Learning rate: %s' % learning_rate_e)
+	print('Beta 1: %s' % beta_1)
+	print('Z dim: %s' % z_dim)
+	print('Batch size: %s' % batch_size)
+	print('Dataset: %s' % data, type(data))
+	contrast_pathology = RepresentationsPathology(data=data, z_dim=z_dim, layers=layers, beta_1=beta_1, init=init, regularizer_scale=regularizer_scale, spectral=spectral, attention=attention,
     							   			  	  learning_rate_e=learning_rate_e, model_name=model)
 	# Train Model.
-    losses = contrast_pathology.train(epochs, data_out_path, data, restore, print_epochs=10, n_images=25, checkpoint_every=check_every, report=report)
+	losses = contrast_pathology.train(epochs, data_out_path, data, restore, print_epochs=10, n_images=25, checkpoint_every=check_every, report=report)
