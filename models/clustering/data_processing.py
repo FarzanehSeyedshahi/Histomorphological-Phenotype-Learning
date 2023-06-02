@@ -665,8 +665,13 @@ def prepare_set_representation_survival(frame_classification, matching_field, gr
 		if frame_classification[frame_classification[matching_field]==sample].shape[0]<min_tiles:
 			continue
 		# Get event time and indicator. 
-		sample_event_time = float(frame_classification[frame_classification[matching_field]==sample][event_data_field].values[0])
-		sample_event_ind  = int(frame_classification[frame_classification[matching_field]==sample][event_ind_field].values[0])
+		if event_data_field is not None:
+		
+			sample_event_time = float(frame_classification[frame_classification[matching_field]==sample][event_data_field].values[0])
+			sample_event_ind  = int(frame_classification[frame_classification[matching_field]==sample][event_ind_field].values[0])
+		else:
+			sample_event_time = float(0)
+			sample_event_ind  = int(0)
 		sample_rep        = sample_representation(frame_classification, matching_field, sample, groupby, leiden_clusters, type_)
 		lr_data.append(sample_rep)
 		lr_samples.append(sample)
@@ -721,13 +726,19 @@ def prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition
 						  use_conn=True, use_ratio=False, top_variance_feat=100, remove_clusters=None):
 	# Dataframes.
 	train_df, valid_df, test_df, additional_df = dataframes
+	print('train df info:', train_df.shape)
+	print('valid df info:', valid_df.shape)
+	print('test df info:', test_df.shape)
+	print('additional df info:', additional_df.shape)
 
 	# Clip based on maximum # of months.
-	train_df = trim_event_data(train_df, event_data_field, max_months=max_months)
-	test_df  = trim_event_data(test_df,  event_data_field, max_months=max_months)
-	if valid_df is not None:
+	if event_data_field is not None:
+		print('event_data_field: %s' % event_data_field)
+		train_df = trim_event_data(train_df, event_data_field, max_months=max_months)
+		test_df  = trim_event_data(test_df,  event_data_field, max_months=max_months)
+	if valid_df is not None and event_data_field is not None:
 		valid_df = trim_event_data(valid_df, event_data_field, max_months=max_months)
-	if additional_df is not None:
+	if additional_df is not None and event_data_field is not None:
 		additional_df = trim_event_data(additional_df, event_data_field, max_months=max_months)
 
 	# Get slide representations and labels
@@ -739,11 +750,14 @@ def prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition
 	if valid_df is not None:
 		valid_slides_df, _, _ = prepare_set_survival(valid_df, matching_field, groupby, leiden_clusters, type_composition, event_ind_field, event_data_field, min_tiles=min_tiles,
 													 use_conn=use_conn, own_corr=True, use_ratio=use_ratio, top_variance_feat=top_variance_feat, keep_features=keep_features)
+	
+	print('valid_slides_df info after set survival:', train_slides_df.shape)
 	additional_slides_df = None
 	if additional_df is not None:
 		additional_slides_df, _, _  = prepare_set_survival(additional_df, matching_field, groupby, leiden_clusters, type_composition, event_ind_field, event_data_field, min_tiles=min_tiles,
 														   use_conn=use_conn, own_corr=True, use_ratio=use_ratio, top_variance_feat=top_variance_feat, keep_features=keep_features)
 
+	print('additional_slides_df info after set survival:', train_slides_df.shape)
 	# TODO - Experimental remove 'background' clusters towards a slide.
 	if remove_clusters is not None:
 		features = [cluster_id for cluster_id in features if cluster_id not in remove_clusters]
@@ -757,8 +771,21 @@ def prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition
 		all_      = None
 		dataframe = None
 		if process_df is not None:
-			all_       = process_df[[matching_field, event_data_field, event_ind_field]+features].copy(deep=True)
-			dataframe  = process_df[[event_data_field, event_ind_field]+features].copy(deep=True)
+			if event_data_field and event_ind_field is not None:
+
+				all_       = process_df[[matching_field, event_data_field, event_ind_field]+features].copy(deep=True)
+				dataframe  = process_df[[event_data_field, event_ind_field]+features].copy(deep=True)
+			else:
+				all_       = process_df[[matching_field]+features].copy(deep=True)
+				dataframe  = process_df[features].copy(deep=True)
+				all_ [event_data_field] = None
+				all_ [event_ind_field]  = None
+				dataframe [event_data_field] = None
+				dataframe [event_ind_field]  = None
+				print('set_name:', set_name)
+				print('all_ info:', all_.shape)
+				print('dataframe info:', dataframe.shape)
+
 		list_df.append((dataframe, set_name))
 		list_all_df.append((all_, set_name))
 

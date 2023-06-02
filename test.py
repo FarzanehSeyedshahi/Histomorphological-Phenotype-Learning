@@ -2,211 +2,264 @@ import h5py
 # import scanpy as sc
 import numpy as np
 import pandas as pd
-# df = h5py.File('data/hdf5_Meso_test.h5', 'r')
-# keys_arr = ['hist_subtype', 'img_h_latent', 'img_z_latent', 'labels', 'patterns', 'samples', 'slides', 'tiles']
-# keys_arr = ['img_z_latent', 'samples', 'slides', 'tiles']
-# f_latent = pd.DataFrame(df_latent['img_z_latent'][:].tolist())
-# f_latent['Core'] = df_latent['samples'][:]
-# f_latent['Core'] = f_latent['Core'].apply(lambda x: x.decode('utf-8')[:-6])
-# f_latent['tiles'] = df_latent['tiles'][:]
-# f_latent['tiles'] = f_latent['tiles'].apply(lambda x: x.decode('utf-8'))
-# f_latent = f_latent
-# f_HPC = pd.read_csv('data/clusters_filtered.csv')[['Core', 'tiles', 'leiden_2.0']]
-# merged = pd.merge(f_HPC, f_latent, on=['Core', 'tiles'])
-# print(merged.columns)
-# Print the number of same and different core tiles
-# np.sum(core_tiles_latent, core_tiles_HPC)
-# adata = sc.read_h5ad('TCGAFFPE_LUADLUSC_5x_60pc_he_complete_lungsubtype_survival_filtered_leiden_2p0__fold0_subsample.h5ad')
-# representations = adata.X
-# HPCs = adata.obs['leiden_2.0']
-# HPCs_long = HPCs.values.__array__(dtype = np.int_)
-# np.savez('mydata.npz', representations = representations, HPC = HPCs_long)
-# data = np.load('mydata.npz')
-# print(data['representations'].shape)
-## or csv
-# df = pd.DataFrame({'representations' : representations, 'HPC' : HPCs_long})
-# print(df.info())
-# df.to_csv('mydata.csv')
-# df2 = pd.read_csv('mydata.csv')
-# print(df.info())
-# # Count the number of samples per class
-# for col in df2.columns:
-#     counts = df2['{}'.format(col)].value_counts()
-#     # Print the counts for each class
-#     print(counts)
+
 main_path = '/raid/users/farzaneh/Histomorphological-Phenotype-Learning'
 h5_complete_path   = '%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete.h5' % main_path
-# with h5py.File(h5_complete_path) as df:
-#     for key in df.keys():
-#         print('key', key)
-#         print('shape', df[key].shape )
-#         print('dtype', df[key].dtype)
-#         print('first', df[key][0])
-#         print('first shape', np.shape(df[key][0]))
-#         print('-----------------------------------')
-#     print('-----------------------------------')
-#     print('-----------------------------------')
-#     slides = df['slides'][:].astype(str)
-#     print('slides', slides[:10] )
-#     samples = ['_'.join(slide.split('_')[:2]) for slide in slides]
-#     print('samples', samples[:10] )
-#     final_df = pd.DataFrame({'slides': slides, 'samples': samples, 'hist_subtype': df['hist_subtype'][:].astype(str), 'tiles': df['tiles'][:].astype(str)})
-#     print(final_df.info())
-#     print(final_df.head())
-#     final_df.to_csv('%s/csv_Meso_250_subsampled_he_complete.csv' % main_path)
 csv_complete_path   = '%s/csv_Meso_250_subsampled_he_complete.csv' % main_path
 
-def get_folds_bins(frame, n_bins=5, eps=1e-6, num_folds=5):
-    def get_folds_event_data(frame, k):
-        # Copy.
-        df = frame.copy(deep=True)
-        # df = df.reindex(np.random.permutation(df.index)).sort_values(event_col)
-        n, _ = df.shape
+# def get_folds_bins(frame, n_bins=5, eps=1e-6, num_folds=5):
+#     def get_folds_event_data(frame, k):
+#         # Copy.
+#         df = frame.copy(deep=True)
+#         # df = df.reindex(np.random.permutation(df.index)).sort_values(event_col)
+#         n, _ = df.shape
 
-        # Fold assigments for each row entry.
-        assignments = np.array((n // k + 1) * list(range(1, k + 1)))
-        print('assignments', assignments)
-        assignments = assignments[:n]
+#         # Fold assigments for each row entry.
+#         assignments = np.array((n // k + 1) * list(range(1, k + 1)))
+#         print('assignments', assignments)
+#         assignments = assignments[:n]
 
-        # Get fold patients.
-        folds = list()
-        for i in range(1, k+1):
-            ix = assignments == i
-            training_data = df.loc[~ix]
-            test_data     = df.loc[ix]
-            training_pat  = pd.unique(training_data.case_submitter_id).tolist()
-            test_pat  = pd.unique(test_data.case_submitter_id).tolist()
-            folds.append((training_pat,test_pat))
-        return folds
+#         # Get fold patients.
+#         folds = list()
+#         for i in range(1, k+1):
+#             ix = assignments == i
+#             training_data = df.loc[~ix]
+#             test_data     = df.loc[ix]
+#             training_pat  = pd.unique(training_data.case_submitter_id).tolist()
+#             test_pat  = pd.unique(test_data.case_submitter_id).tolist()
+#             folds.append((training_pat,test_pat))
+#         return folds
 
-    frame_working = frame.copy(deep=True)
-    uncensored_df = frame_working[frame_working.event_ind==1]
+#     frame_working = frame.copy(deep=True)
+#     uncensored_df = frame_working[frame_working.event_ind==1]
 
-    disc_labels, q_bins = pd.qcut(uncensored_df['event_data'], q=n_bins, retbins=True, labels=False)
-    q_bins[-1] = frame_working['event_data'].max() + eps
-    q_bins[0] = frame_working['event_data'].min() - eps
+#     disc_labels, q_bins = pd.qcut(uncensored_df['event_data'], q=n_bins, retbins=True, labels=False)
+#     q_bins[-1] = frame_working['event_data'].max() + eps
+#     q_bins[0] = frame_working['event_data'].min() - eps
 
-    disc_labels, q_bins = pd.cut(frame_working['event_data'], bins=q_bins, retbins=True, labels=False, right=False, include_lowest=True)
-    frame_working.insert(2, 'label', disc_labels.values.astype(int))
+#     disc_labels, q_bins = pd.cut(frame_working['event_data'], bins=q_bins, retbins=True, labels=False, right=False, include_lowest=True)
+#     frame_working.insert(2, 'label', disc_labels.values.astype(int))
 
-    total_folds = dict()
-    for i in range(num_folds):
-        total_folds[i] = dict()
-        total_folds[i]['train'] = list()
-        total_folds[i]['valid'] = list()
-        total_folds[i]['test'] = list()
+#     total_folds = dict()
+#     for i in range(num_folds):
+#         total_folds[i] = dict()
+#         total_folds[i]['train'] = list()
+#         total_folds[i]['valid'] = list()
+#         total_folds[i]['test'] = list()
 
-    for i in range(len(q_bins)-1):
-        bin_censored   = frame_working[(frame_working.label==i)&(frame_working.censored==1)]
-        bin_uncensored = frame_working[(frame_working.label==i)&(frame_working.censored==0)]
-        bin_folds_censored   = get_folds_event_data(frame=bin_censored,   k=num_folds)
-        bin_folds_uncensored = get_folds_event_data(frame=bin_uncensored, k=num_folds)
+#     for i in range(len(q_bins)-1):
+#         bin_censored   = frame_working[(frame_working.label==i)&(frame_working.censored==1)]
+#         bin_uncensored = frame_working[(frame_working.label==i)&(frame_working.censored==0)]
+#         bin_folds_censored   = get_folds_event_data(frame=bin_censored,   k=num_folds)
+#         bin_folds_uncensored = get_folds_event_data(frame=bin_uncensored, k=num_folds)
 
-        for i in range(num_folds):
-            total_folds[i]['train'].extend([(pat, None, None) for pat in bin_folds_censored[i][0]] + [(pat, None, None) for pat in bin_folds_uncensored[i][0]])
-            total_folds[i]['test'].extend([(pat, None, None) for pat in bin_folds_censored[i][1]] + [(pat, None, None) for pat in bin_folds_uncensored[i][1]])
-    return total_folds
+#         for i in range(num_folds):
+#             total_folds[i]['train'].extend([(pat, None, None) for pat in bin_folds_censored[i][0]] + [(pat, None, None) for pat in bin_folds_uncensored[i][0]])
+#             total_folds[i]['test'].extend([(pat, None, None) for pat in bin_folds_censored[i][1]] + [(pat, None, None) for pat in bin_folds_uncensored[i][1]])
+#     return total_folds
 
-# Verify: This should all be empty.
-def sanity_check_overlap(folds, num_folds):
-    print('Running sanity check, this should return no samples!')
-    flag_good = True
-    # For each fold, no overlap between cells.
-    for i in range(num_folds):
-        if 'valid' in folds[i].keys():
-            result = set(folds[i]['train']).intersection(set(folds[i]['valid']))
-            if len(result) > 0:
-                flag_good = False
-                print(result)
+# # Verify: This should all be empty.
+# def sanity_check_overlap(folds, num_folds):
+#     print('Running sanity check, this should return no samples!')
+#     flag_good = True
+#     # For each fold, no overlap between cells.
+#     for i in range(num_folds):
+#         if 'valid' in folds[i].keys():
+#             result = set(folds[i]['train']).intersection(set(folds[i]['valid']))
+#             if len(result) > 0:
+#                 flag_good = False
+#                 print(result)
 
-            result = set(folds[i]['valid']).intersection(set(folds[i]['test']))
-            if len(result) > 0:
-                flag_good = False
-                print(result)
+#             result = set(folds[i]['valid']).intersection(set(folds[i]['test']))
+#             if len(result) > 0:
+#                 flag_good = False
+#                 print(result)
 
-        result = set(folds[i]['train']).intersection(set(folds[i]['test']))
-        if len(result) > 0:
-            flag_good = False
-            print(result)
+#         result = set(folds[i]['train']).intersection(set(folds[i]['test']))
+#         if len(result) > 0:
+#             flag_good = False
+#             print(result)
 
-        # No overlap between test sets of all folds.
-        for i in range(num_folds):
-            for j in range(num_folds):
-                if i==j: continue
-                result = set(folds[i]['test']).intersection(set(folds[j]['test']))
-                if len(result) > 0:
-                    flag_good = False
-                    print('Fold %s-%s' % (i,j), result)
-    if flag_good:
-        print('All good')
-    else:
-        print('Review folds')
-    print('')
-    return flag_good
+#         # No overlap between test sets of all folds.
+#         for i in range(num_folds):
+#             for j in range(num_folds):
+#                 if i==j: continue
+#                 result = set(folds[i]['test']).intersection(set(folds[j]['test']))
+#                 if len(result) > 0:
+#                     flag_good = False
+#                     print('Fold %s-%s' % (i,j), result)
+#     if flag_good:
+#         print('All good')
+#     else:
+#         print('Review folds')
+#     print('')
+#     return flag_good
 
-def fold_samples_to_slides(folds, frame):
-    folds_slides = dict()
-    for i in folds:
-        train_samples = [sample for sample, _, _ in folds[i]['train']]
-        valid_samples = [sample for sample, _, _ in folds[i]['valid']]
-        test_samples  = [sample for sample, _, _ in folds[i]['test']]
-        train_slides = np.unique(frame[frame.samples.isin(train_samples)]['slides'].values.tolist())
-        valid_slides = np.unique(frame[frame.samples.isin(valid_samples)]['slides'].values.tolist())
-        test_slides  = np.unique(frame[frame.samples.isin(test_samples)]['slides'].values.tolist())
-        folds_slides[i] = dict()
-        folds_slides[i]['train'] = [(slide, None, None) for slide in train_slides]
-        folds_slides[i]['valid'] = [(slide, None, None) for slide in valid_slides]
-        folds_slides[i]['test']  = [(slide, None, None) for slide in test_slides]
-    return folds_slides
+# def fold_samples_to_slides(folds, frame):
+#     folds_slides = dict()
+#     for i in folds:
+#         train_samples = [sample for sample, _, _ in folds[i]['train']]
+#         valid_samples = [sample for sample, _, _ in folds[i]['valid']]
+#         test_samples  = [sample for sample, _, _ in folds[i]['test']]
+#         train_slides = np.unique(frame[frame.samples.isin(train_samples)]['slides'].values.tolist())
+#         valid_slides = np.unique(frame[frame.samples.isin(valid_samples)]['slides'].values.tolist())
+#         test_slides  = np.unique(frame[frame.samples.isin(test_samples)]['slides'].values.tolist())
+#         folds_slides[i] = dict()
+#         folds_slides[i]['train'] = [(slide, None, None) for slide in train_slides]
+#         folds_slides[i]['valid'] = [(slide, None, None) for slide in valid_slides]
+#         folds_slides[i]['test']  = [(slide, None, None) for slide in test_slides]
+#     return folds_slides
+
 
 
 
 
 # import pandas as pd
+# import numpy as np
+# import pickle
+# import copy
+# import math
 # import os
 
-# # Set the path to the folder containing the CSV files
-# folder_path = 'adatas/'
+# def store_data(data, file_path):
+#     with open(file_path, 'wb') as file:
+#         pickle.dump(data, file)
 
-# # Get a list of all CSV files in the folder
-# file_list = [file for file in os.listdir(folder_path) if file.endswith('.csv') & ('1p0' in file) ]
+# def get_frac_split(meta_df, matching_field, ind_column, num_folds=5):
+#     # Copy dataframe.
+#     df = meta_df.copy(deep=True)
 
-# # Initialize an empty dataframe
-# df = pd.DataFrame()
+#     # Get unique classes.
+#     unique_classes = np.unique(meta_df[ind_column])
+#     # randomize rows
+#     df = df.sample(frac=1).reset_index(drop=True)
 
-# # Loop through each CSV file and append it to the dataframe
-# for file in file_list:
-#     file_path = os.path.join(folder_path, file)
-#     temp_df = pd.read_csv(file_path)
-#     print(file)
-#     print(temp_df.info())
-#     df = df._append(temp_df)
+#     folds          = dict()
+#     for i in range(num_folds):
+#         folds[i] = dict()
+#         folds[i]['train'] = list()
+#         folds[i]['test']  = list()
 
-# print('final df+++++++++++/n', df.info())
-# # # Reset the index of the dataframe
-# # df = df.reset_index(drop=True)
-# subset_ind = df['leiden_1.0'].values
-# print(subset_ind, len(set(subset_ind)))
+#     for class_ in unique_classes:
+#         # Get slides for class.
+#         slides      = np.unique(df[df[ind_column]==class_][matching_field].values)
 
+#         # Test size.
+#         num_samples = len(slides)
+#         test_size   = math.floor(num_samples*(1/num_folds))
 
+#         # Iterate through chunks and add samples to fold.
+#         for i in range(num_folds):
+#             test_sample  = slides[i*test_size:(i+1)*test_size]
+#             train_sample = list(set(slides).difference(set(test_sample)))
+#             folds[i]['train'].extend(train_sample)
+#             folds[i]['test'].extend(test_sample)
 
+#     return folds
 
+# def get_folds(meta_df, matching_field, ind_column, num_folds=5, valid_set=False):
 
-# f = h5py.File('hdf5_TCGAFFPE_LUADLUSC_5x_60pc_he_complete_lungsubtype_survival_filtered.h5', 'r')
-# tot_ind = f['indexes']
+#     # Get initial split for train/test.
+#     folds = get_frac_split(meta_df, matching_field, ind_column, num_folds=num_folds)
 
-# import numpy as np
-# indexes = np.where(np.isin(tot_ind, subset_ind))[0]
-# print(indexes, len(indexes))
-# unique_values, counts = np.unique(tot_ind, return_counts=True)
-# print(len(unique_values), len(unique_values[counts > 1]))
-# print(df[df['indexes']==7288])
-# Create the numpy array with repeated elements
-# arr = np.array([1, 2,3, 2, 3,5,  3, 3, 4, 4, 4])
+#     for i in range(num_folds):
+#         whole_train_samples = folds[i]['train']
+#         subset_df = meta_df[meta_df[matching_field].isin(whole_train_samples)]
+#         train_val_folds = get_frac_split(subset_df, matching_field, ind_column, num_folds=num_folds)
+#         del folds[i]['train']
+#         folds[i]['train'] = train_val_folds[0]['train']
+#         folds[i]['valid'] = train_val_folds[0]['test']
 
-# # Find the unique values and their counts
-# unique_values, counts = np.unique(arr, return_counts=True)
-# print(unique_values, counts)
-# # Print the repeated values
-# repeated_values = unique_values[counts > 1]
-# print(repeated_values)
+#     return folds
+
+# # Verify: This should all be empty.
+# def sanity_check_overlap(folds, num_folds):
+#     # For each fold, no overlap between cells.
+#     for i in range(num_folds):
+#         result = set(folds[i]['train']).intersection(set(folds[i]['valid']))
+#         if len(result) > 0:
+#             print(result)
+
+#         result = set(folds[i]['train']).intersection(set(folds[i]['test']))
+#         if len(result) > 0:
+#             print(result)
+
+#         result = set(folds[i]['valid']).intersection(set(folds[i]['test']))
+#         if len(result) > 0:
+#             print(result)
+
+#         # No overlap between test sets of all folds.
+#         for i in range(num_folds):
+#             for j in range(num_folds):
+#                 if i==j: continue
+#                 result = set(folds[i]['test']).intersection(set(folds[j]['test']))
+#                 if len(result) > 0:
+#                     print('Fold %s-%s' % (i,j), result)
+
+# # Fit for legacy code.
+# def fit_format(folds):
+#     slides_folds = dict()
+#     for i, fold in enumerate(folds):
+#         slides_folds[i] = dict()
+#         slides_folds[i]['train'] = [(slide, None, None) for slide in folds[i]['train']]
+#         slides_folds[i]['valid'] = [(slide, None, None) for slide in folds[i]['valid']]
+#         slides_folds[i]['test']  = [(slide, None, None) for slide in folds[i]['test']]
+
+#     return slides_folds
+
+#reading h5 file
+import h5py
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def read_h5(file_path):
+    with h5py.File(file_path, 'r') as file:
+        for key in file.keys():
+            print(key)
+            print(file[key].shape)
+            print(file[key][0])
+            print('--------------------------------------------------')
+        extracted_rows = {}
+        mask = file['slides'][:] == b'MESO_406_6'
+        for column_name in file.keys():
+            column_data = file[column_name][:]
+            extracted_rows[column_name] = column_data[mask]
+        print(extracted_rows)
+    return extracted_rows
+
+# data = read_h5('%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete.h5' % main_path)
+
+def making_csv(file_path):
+    with h5py.File(h5_complete_path) as df:
+        # patient_csv = pd.read_excel('files/Mesotheliomanovember_DATA_LABELS_2020-07-31_1737.xlsx')
+        # patient_csv = patient_csv[['Case Number', 'Slides to De-archive', 'Blocks to De-archive', 'Data Source', \
+        #                            'Operation', 'Side', 'Mesothelioma Type', 'Desmoplastic Component', 'Diaphragm Involvement', \
+        #                             'Rib Involvement', 'Lung Involvement', 'Chest Wall Involvement', 'N Stage', 'T Stage', \
+        #                                 'M Stage', 'Overall Stage (7th Edition TNM)', 'Overall Stage (8th Edition TNM)', \
+        #                                    'Confident Diagnosis of Mesothelioma?', 'Survival Status',  'Time to Survival Status (Days)'\
+        #                                        , 'Time to Survival Status (Months)', 'Hb score', 'Haemoglobin Measurement (g/dL)', 'Core Mesothelioma Type'  ]]
+        # patient_csv.to_csv('%s/files/patient_csv_fitered.csv' % main_path)
+        filtered_patient_csv = pd.read_csv('%s/files/patient_csv_fitered.csv' % main_path)
+        filtered_patient_csv = filtered_patient_csv[['Case Number', 'Time to Survival Status (Months)', 'Time to Survival Status (Days)', 'Core Mesothelioma Type', \
+                                                     'Overall Stage (8th Edition TNM)', 'Survival Status']]
+        filtered_patient_csv = filtered_patient_csv.rename(columns={'Case Number': 'case_number', 'Time to Survival Status (Months)': 'survival_months', \
+                                                                    'Time to Survival Status (Days)': 'survival_days', 'Core Mesothelioma Type': 'Meso_type', \
+                                                                        'Overall Stage (8th Edition TNM)': 'stage', 'Survival Status': 'survival_status'})
+        
+        filtered_patient_csv['case_number'] = filtered_patient_csv['case_number'][:].astype(int)
+        print(filtered_patient_csv.info())
+
+        slides = df['slides'][:].astype(str)
+        samples = ['_'.join(slide.split('_')[:2]) for slide in slides]
+        case_number = [slide.split('_')[1] for slide in slides]
+        final_df = pd.DataFrame({'case_number': case_number, 'slides': slides, 'samples': samples, 'hist_subtype': df['hist_subtype'][:].astype(str), 'tiles': df['tiles'][:].astype(str)})
+        final_df['case_number'] = final_df['case_number'][:].astype(int)
+        print(final_df.info())
+        # final_df.to_csv('%s/files/csv_Meso_250_subsampled_he_complete.csv' % main_path)
+
+        merged_df = pd.merge(final_df, filtered_patient_csv, on='case_number', how='left')
+        print(merged_df.info())
+        merged_df.to_csv('%s/files/csv_Meso_250_subsampled_he_complete_merged.csv' % main_path)
+
+making_csv(h5_complete_path)
