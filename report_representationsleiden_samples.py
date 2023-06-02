@@ -89,7 +89,7 @@ groupby = 'leiden_%s' % resolution
 
 # Dataset images.
 data = Data(dataset=dataset, marker=marker, patch_h=image_height, patch_w=image_width, n_channels=image_channels, batch_size=64, project_path=dbs_path, load=True)
-
+print('Loaded dataset: %s' % data)
 # Dump cluster images.
 if tile_img:
     plot_cluster_images(groupby, meta_folder, data, fold, h5_complete_path, dpi, value_cluster_ids, extensive=extensive)

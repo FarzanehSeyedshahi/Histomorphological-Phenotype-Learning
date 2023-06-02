@@ -8,6 +8,7 @@ import random
 import csv
 import os
 import gc
+from tqdm import tqdm
 
 # Own libs
 from models.clustering.data_processing import *
@@ -214,7 +215,10 @@ def cluster_set_images(frame, data_dicts, groupby, set_, leiden_path, dpi):
         csv_information = list()
         images_cluster = list()
         i = 0
-        for index, original_set in combined:
+        print('Data dict keys: %s' % data_dicts)
+
+        for index, original_set in tqdm(combined):
+            # print('Index: %s, Original set: %s' % (index, original_set))
             images_cluster.append(data_dicts[original_set][int(index)]/255.)
             csv_information.append(frame[(frame.indexes==index)&(frame.original_set==original_set)].to_dict('index'))
             i += 1

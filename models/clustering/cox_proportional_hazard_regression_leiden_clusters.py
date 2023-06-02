@@ -326,8 +326,11 @@ def run_cph_regression_individual(orig_alpha, resolution, meta_folder, matching_
 	adatas_path       = os.path.join(main_cluster_path, 'adatas')
 
 	# Retrieve the best alpha performance.
-	alpha, alphas, _ = get_best_alpha(main_cluster_path, meta_folder, l1_ratio, min_tiles, resolution, force_fold)
-
+	# alpha, alphas, _ = get_best_alpha(main_cluster_path, meta_folder, l1_ratio, min_tiles, resolution, force_fold)
+	alpha = orig_alpha
+	alphas = [alpha]
+	print('Alpha:', alpha)
+	
 	# Particular run path
 	alpha_path = os.path.join(main_cluster_path, '%s_%s_alpha_%s_l1ratio_%s_mintiles_%s' % (meta_folder, groupby, str(orig_alpha).replace('.','p'), str(l1_ratio).replace('.','p'), min_tiles))
 	if not os.path.isdir(alpha_path): os.makedirs(alpha_path)
