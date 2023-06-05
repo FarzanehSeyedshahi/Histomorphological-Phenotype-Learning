@@ -817,9 +817,9 @@ def real_encode_contrastive_from_checkpoint(model, data, data_out_path, checkpoi
 
 	# Extracting name for projections.
 	name_file = real_hdf5.split('/')[-1]
+	print('file name:', name_file)
 	hdf5_path = os.path.join(path, name_file)
 	# Check if file is already there.
-	print('H5 Projections file path:', hdf5_path)
 	if not os.path.isfile(hdf5_path):
 
 		# H5 File specifications and creation.
@@ -909,6 +909,7 @@ def real_encode_contrastive_from_checkpoint(model, data, data_out_path, checkpoi
 		# Retrieve number of samples.
 		with h5py.File(hdf5_path, mode='r') as hdf5_file:
 			for key in hdf5_file.keys():
+				print('\t Key: %s' % key)
 				num_samples = key_shape.shape[0]
 				break
 		print('H5 File already created.')

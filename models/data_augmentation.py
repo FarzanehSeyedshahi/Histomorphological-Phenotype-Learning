@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 import functools
 import random
+import warnings
+warnings.filterwarnings("ignore")
 
 # Random sampling to recide if the transformation is applied.
 def random_apply(func, p, x):

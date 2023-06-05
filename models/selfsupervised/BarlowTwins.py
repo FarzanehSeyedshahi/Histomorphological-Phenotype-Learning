@@ -1,5 +1,8 @@
 import tensorflow as tf
 import numpy as np
+import warnings
+warnings.filterwarnings("ignore")
+
 try:
 	import wandb
 	from models.wandb_utils import *

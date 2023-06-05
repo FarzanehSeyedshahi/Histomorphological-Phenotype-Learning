@@ -2,5 +2,6 @@
 datasets/*
 model*
 results/*
+results_temp/*
 data_model_output_temp/*
 data_model_output/*
