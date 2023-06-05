@@ -4,6 +4,8 @@ from data_manipulation.data import Data
 import tensorflow as tf
 import argparse
 import os
+import warnings
+warnings.filterwarnings("ignore")
 
 # Folder permissions for cluster.
 os.umask(0o002)
