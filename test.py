@@ -221,45 +221,98 @@ def read_h5(file_path):
             print(file[key][0])
             print('--------------------------------------------------')
         extracted_rows = {}
-        mask = file['slides'][:] == b'MESO_406_6'
+        
+        ## filter by slide
+        # mask = file['slides'][:] == b'MESO_406_6'
+        # for column_name in file.keys():
+        #     column_data = file[column_name][:]
+        #     extracted_rows[column_name] = column_data[mask]
+        ## get a part of the data ( first 10 rows )
         for column_name in file.keys():
             column_data = file[column_name][:]
-            extracted_rows[column_name] = column_data[mask]
+            extracted_rows[column_name] = column_data[:3]
+            print(extracted_rows[column_name][0])
+        with h5py.File('%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_subset_complete.h5' % main_path, 'w') as f:
+            for key in extracted_rows.keys():
+                f.create_dataset(name=key, data=extracted_rows[key])
+
         print(extracted_rows)
     return extracted_rows
 
-# data = read_h5('%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete.h5' % main_path)
-
-def making_csv(file_path):
-    with h5py.File(h5_complete_path) as df:
-        # patient_csv = pd.read_excel('files/Mesotheliomanovember_DATA_LABELS_2020-07-31_1737.xlsx')
-        # patient_csv = patient_csv[['Case Number', 'Slides to De-archive', 'Blocks to De-archive', 'Data Source', \
-        #                            'Operation', 'Side', 'Mesothelioma Type', 'Desmoplastic Component', 'Diaphragm Involvement', \
-        #                             'Rib Involvement', 'Lung Involvement', 'Chest Wall Involvement', 'N Stage', 'T Stage', \
-        #                                 'M Stage', 'Overall Stage (7th Edition TNM)', 'Overall Stage (8th Edition TNM)', \
-        #                                    'Confident Diagnosis of Mesothelioma?', 'Survival Status',  'Time to Survival Status (Days)'\
-        #                                        , 'Time to Survival Status (Months)', 'Hb score', 'Haemoglobin Measurement (g/dL)', 'Core Mesothelioma Type'  ]]
-        # patient_csv.to_csv('%s/files/patient_csv_fitered.csv' % main_path)
-        filtered_patient_csv = pd.read_csv('%s/files/patient_csv_fitered.csv' % main_path)
-        filtered_patient_csv = filtered_patient_csv[['Case Number', 'Time to Survival Status (Months)', 'Time to Survival Status (Days)', 'Core Mesothelioma Type', \
-                                                     'Overall Stage (8th Edition TNM)', 'Survival Status']]
-        filtered_patient_csv = filtered_patient_csv.rename(columns={'Case Number': 'case_number', 'Time to Survival Status (Months)': 'survival_months', \
-                                                                    'Time to Survival Status (Days)': 'survival_days', 'Core Mesothelioma Type': 'Meso_type', \
-                                                                        'Overall Stage (8th Edition TNM)': 'stage', 'Survival Status': 'survival_status'})
+# A function for chunck the data into smaller h5 files alomg with the metadata csv file
+# def chunk_h5(file_path, chunk_size, metadata_path):
+#      with h5py.File(file_path, 'r') as file:
         
-        filtered_patient_csv['case_number'] = filtered_patient_csv['case_number'][:].astype(int)
-        print(filtered_patient_csv.info())
+#         extracted_rows = {}
+#         metadata = pd.read_csv(metadata_path)
+#         for column_name in file.keys():
+#             column_data = file[column_name][:]
+#             extracted_rows[column_name] = column_data[:chunk_size]
+#         with h5py.File('%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_%s.h5' % (main_path, slide), 'w') as f:
+#             for key in extracted_rows.keys():
+#                 f.create_dataset(name=key, data=extracted_rows[key])
+#         print(extracted_rows)
 
-        slides = df['slides'][:].astype(str)
-        samples = ['_'.join(slide.split('_')[:2]) for slide in slides]
-        case_number = [slide.split('_')[1] for slide in slides]
-        final_df = pd.DataFrame({'case_number': case_number, 'slides': slides, 'samples': samples, 'hist_subtype': df['hist_subtype'][:].astype(str), 'tiles': df['tiles'][:].astype(str)})
-        final_df['case_number'] = final_df['case_number'][:].astype(int)
-        print(final_df.info())
-        # final_df.to_csv('%s/files/csv_Meso_250_subsampled_he_complete.csv' % main_path)
+# A function for loading the h5 file in pandas dataframe and merge the metadata csv file using pandas
+def combine_h5(file_path, metadata_path):
+    h5_complete_path = './results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete_combined_metadata.h5'
+    # delete the file if it exists
+    import os
+    if os.path.exists(h5_complete_path):
+        os.remove(h5_complete_path)
 
-        merged_df = pd.merge(final_df, filtered_patient_csv, on='case_number', how='left')
-        print(merged_df.info())
-        merged_df.to_csv('%s/files/csv_Meso_250_subsampled_he_complete_merged.csv' % main_path)
+    
+    content = h5py.File(h5_complete_path, mode='a')
+    with h5py.File(file_path, 'r') as file:
+        metadata = pd.read_csv(metadata_path, index_col=0)        
+        for column_name in file.keys():
+            if column_name == 'slides':
+                    # Sanity check to see if the slides are the same in the h5 file and the metadata csv file
+                    slides_np_h5 = np.array(file[column_name][:].astype(str))
+                    slides_np_csv = metadata['slides'].to_numpy()
+        
+        if (slides_np_h5==slides_np_csv).all():
+            for column_name in file.keys():
+                content.create_dataset(name=column_name, data=file[column_name][:])
+                print(column_name)
+            print('h5 file done')
+            for column_name in metadata.columns:
+                #check the column name if already exists in the h5 file
+                if column_name in content.keys():
+                    print(column_name, 'already exists')
+                    continue
+                else:
+                    content.create_dataset(name=column_name, data=metadata[column_name][:].to_numpy())
+                    print(column_name, 'created')
 
-making_csv(h5_complete_path)
+            print('metadata done')
+        else:
+            print('The slides order are not similar')
+            return
+    
+    print('New Generated h5 file:')
+    for key in content.keys():
+        print(key)
+        print(content[key].shape)
+        print(content[key][0])
+        print(content[key][-1])
+        print('--------------------------------------------------')
+h5_complete_path = './results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete_combined_metadata.h5'     
+subset_h5 = './results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_subset_complete_combined_metadata.h5'
+# data = read_h5('%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete.h5' % main_path)
+# combine_h5('./results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete.h5', './files/csv_Meso_250_subsampled_he_complete_with_survival.csv')
+# subset_h5 ='%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_subset_complete.h5' % main_path
+# with h5py.File(subset_h5, 'r') as file:
+#         for key in file.keys():
+#             print(key)
+#             print(file[key].shape)
+#             print(file[key][0])
+#             print(file[key][1])
+#             print(file[key][2])
+#             print('--------------------------------------------------')
+
+# print the keys from subset h5 file and the complete h5 file
+with h5py.File(subset_h5, 'r') as file:
+    print(file.keys())
+with h5py.File(h5_complete_path, 'r') as file:
+    print(file.keys())
