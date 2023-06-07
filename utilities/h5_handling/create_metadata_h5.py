@@ -58,6 +58,7 @@ def data_specs(h5_path):
 # Create new H5 file with individuals in the meta file.
 def create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta_individuals, num_tiles, key_dict, override):
     h5_metadata_path = h5_file.replace('.h5', '_%s.h5' % meta_name)
+    print('-------------------------------- Creating H5 file: %s' % h5_metadata_path)
 
     if os.path.isfile(h5_metadata_path):
         if override:
@@ -71,12 +72,19 @@ def create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta
     storage_dict = dict()
     content      = h5py.File(h5_metadata_path, mode='w')
     for key in key_dict:
+        print('\tCreating dataset: %s' % key)
         shape = [num_tiles] + list(key_dict[key]['shape'])
+        print('\t\tShape: %s' % shape)
         dtype = key_dict[key]['dtype']
+        print('\t\tDtype: %s' % dtype)
         storage_dict[key] = content.create_dataset(name=key.replace('train_', ''), shape=shape, dtype=dtype)
+        print(storage_dict[key][0])
+        print('\n--------------------------------')
 
     dt = h5py.special_dtype(vlen=str)
+    print('dt: %s' % dt)
     for meta_field in list_meta_field:
+        print('\tCreating dataset: %s' % meta_field)
         dtype = frame[meta_field].dtype
         if str(dtype) == 'object':
             dtype = dt
@@ -85,7 +93,6 @@ def create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta
     index = 0
     print('Iterating through %s ...' % h5_file.split('/')[-1])
     with h5py.File(h5_file, 'r') as orig_content:
-
         set_dict = dict()
         for key in storage_dict:
             flag_meta_field = False
@@ -109,6 +116,11 @@ def create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta
             for key in storage_dict:
                 # Check for field to include.
                 if key in list_meta_field:
+                    print('storage_dict[key]', storage_dict[key])
+                    print('index', index)
+                    print('storage_dict[key][index] shape', np.shape(storage_dict[key][index]))
+                    print('frame', frame[frame[matching_field].astype(str)==str(h5_individual)][key])
+                    print('frame shape', np.shape(frame[frame[matching_field].astype(str)==str(h5_individual)][key]))
                     storage_dict[key][index] = frame[frame[matching_field].astype(str)==str(h5_individual)][key]
                 # Copy all other fiels
                 else:
