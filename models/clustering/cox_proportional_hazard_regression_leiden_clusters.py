@@ -82,6 +82,11 @@ def mean_confidence_interval(data, confidence=0.95):
 def train_cox(datas, penalizer, l1_ratio, event_ind_field='event_ind', event_data_field='event_data', robust=True, frame_clusters=None, groupby=None):
 	# Train Cox Proportional Hazard.
 	train, set_name = datas[0]
+	#drop nans
+	print('train shape before dropna: ', train.shape)
+	train = train.dropna(axis=0, how='any')
+	print('train shape after dropna: ', train.shape)
+
 	cph = CoxPHFitter(penalizer=penalizer, l1_ratio=l1_ratio)
 	cph.fit(train, duration_col=event_data_field, event_col=event_ind_field, show_progress=False, robust=robust)
 
@@ -194,7 +199,7 @@ def mean_ci_cox(all_data, results_path_csv, ylim=[0.4, 1.0]):
 	sns.set_theme(style='darkgrid')
 	fig, ax = plt.subplots(figsize=(20, 7), nrows=1, ncols=1)
 	meanprops={"marker":"o", "markerfacecolor":"red", "markeredgecolor":"black", "markersize":"6"}
-	sns.pointplot(x='Resolution', hue='Set', y='C-Index', data=all_data, ax=ax, linewidth=0.01, dodge=.3, join=False, capsize=.04, markers='s', ci=95)
+	sns.pointplot(x='Resolution', hue='Set', y='C-Index', data=all_data, ax=ax, dodge=.3, join=False, capsize=.04, markers='s', errorbar=('ci', 95))
 	if ylim is not None:
 		ax.set_ylim(ylim)
 	ax.set_title('Leiden + Cox Regression', fontweight='bold', fontsize=18)
@@ -237,7 +242,7 @@ def summarize_cindex_same_clusters(cox_ridge_data_df, resolutions, results_path_
 				456
 				789'''
 	fig     = plt.figure(figsize=(20,20), constrained_layout=True)
-	ax_dict = fig.subplot_mosaic(mosaic, sharex=False, sharey=False)
+	ax_dict = fig.subplot_mosaic(mosaic)
 	for j, resolution in enumerate(resolutions):
 		groupby     = 'leiden_%s' % resolution
 		alphas_df   = cox_ridge_data_df[cox_ridge_data_df.resolution==resolution]
@@ -434,17 +439,18 @@ def run_cph_regression(alphas, resolutions, meta_folder, matching_field, folds, 
 		print('\tResolution', groupby)
 		data_res_folds[resolution] = dict()
 		for i, fold in enumerate(folds):
-			# Read CSV files for train, validation, test, and additional sets.
-			dataframes, _, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold, force_fold)
-			# Prepare data for COX.
-			data, datas_all, features = prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition, max_months, matching_field, event_ind_field, event_data_field, min_tiles,
-															  use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat, remove_clusters=remove_clusters)
+			# if i == 0:
+				# Read CSV files for train, validation, test, and additional sets.
+				dataframes, _, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold, force_fold)
+				# Prepare data for COX.
+				data, datas_all, features = prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition, max_months, matching_field, event_ind_field, event_data_field, min_tiles,
+																use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat, remove_clusters=remove_clusters)
 
-			# Store representations.
-			data_res_folds[resolution][i] = {'data':data, 'features':features}
+				# Store representations.
+				data_res_folds[resolution][i] = {'data':data, 'features':features}
 
-			# Information
-			print('\t\tFold', i, 'Features:', len(features), 'Clusters:', len(leiden_clusters))
+				# Information
+				print('\t\tFold', i, 'Features:', len(features), 'Clusters:', len(leiden_clusters))
 
 	# Run Cox Proportional Hazard regression.
 	for l1_ratio in l1_ratios:
@@ -457,17 +463,19 @@ def run_cph_regression(alphas, resolutions, meta_folder, matching_field, folds, 
 			for alpha in alphas:
 				print('\t\tResolution', resolution, 'Alpha', alpha)
 				for i, fold in enumerate(folds):
+					# if i == 0:
 
-					# Load data.
-					data     = data_res_folds[resolution][i]['data']
-					features = data_res_folds[resolution][i]['features']
+						# Load data.
+						data     = data_res_folds[resolution][i]['data']
+						features = data_res_folds[resolution][i]['features']
+						
 
-					# COX Regression
-					estimator, predictions, _ = train_cox(data, penalizer=alpha, l1_ratio=l1_ratio, robust=True, event_ind_field=event_ind_field, event_data_field=event_data_field)
+						# COX Regression
+						estimator, predictions, _ = train_cox(data, penalizer=alpha, l1_ratio=l1_ratio, robust=True, event_ind_field=event_ind_field, event_data_field=event_data_field)
 
-					# Evaluation metrics.
-					cis = evalutaion_survival(data, predictions, event_ind_field=event_ind_field, event_data_field=event_data_field)
-					print('\t\t\tFold %s %-3s features C-Index:' % (i, len(features)), cis)
+						# Evaluation metrics.
+						cis = evalutaion_survival(data, predictions, event_ind_field=event_ind_field, event_data_field=event_data_field)
+						print('\t\t\tFold %s %-3s features C-Index:' % (i, len(features)), cis)
 
-					# Keep track of performance.
-					cox_data = keep_track_data(resolution, alpha, i, cis, cox_data, l1_ratio, min_tiles, meta_folder, main_cluster_path)
+						# Keep track of performance.
+						cox_data = keep_track_data(resolution, alpha, i, cis, cox_data, l1_ratio, min_tiles, meta_folder, main_cluster_path)
