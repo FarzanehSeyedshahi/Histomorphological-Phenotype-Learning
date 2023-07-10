@@ -108,9 +108,12 @@ def read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h
 	else:
 		# Train, valid, and test set.
 		adata_name   = h5_complete_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
+		print('Adata name:', adata_name)
 		train_csv    = os.path.join(adatas_path, '%s_train.csv' % adata_name)
 		if not os.path.isfile(train_csv):
+			print('Train csv not found:', train_csv)
 			train_csv    = os.path.join(adatas_path, '%s.csv' % adata_name)
+		print('Train csv:', train_csv)
 		valid_csv    = os.path.join(adatas_path, '%s_valid.csv' % adata_name)
 		test_csv     = os.path.join(adatas_path, '%s_test.csv' % adata_name)
 
