@@ -66,8 +66,8 @@ def create_complete_h5(data_path, num_tiles, key_dict, indexes_to_remove, overri
             
             # Check if this is a tile to remove
             if i in indexes_to_remove:
-            	indexes_to_remove.remove(i)
-            	continue
+                indexes_to_remove.remove(i)
+                continue
 
             if num_tiles == index:
                 break

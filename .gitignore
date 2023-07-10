@@ -10,4 +10,5 @@ files/*
 *._*
 .DS_Store
 */.DS_Store
-
+utilities/files/indexes_to_remove/
+Transformers
