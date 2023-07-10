@@ -5,3 +5,9 @@ results/*
 results_temp/*
 data_model_output_temp/*
 data_model_output/*
+Transformers/results/*
+files/*
+*._*
+.DS_Store
+*/.DS_Store
+
