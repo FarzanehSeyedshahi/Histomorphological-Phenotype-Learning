@@ -44,16 +44,20 @@ top_variance_feat = 99
 # Default alphas and resolutions.
 alphas      = [0.1, 0.5, 1.0, 5.0, 10.0, 25.0, 30.0]
 alphas      = [0.5, 1.0, 5.0, 10.0, 25.0, 30.0]
-resolutions = [1.0, 1.5, 2.0, 2.5, 3.0,  3.5,  4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0,  7.5,  8.0, 8.5, 9.0, 9.5]
+# resolutions = [1.0, 1.5, 2.0, 2.5, 3.0,  3.5,  4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0,  7.5,  8.0, 8.5, 9.0, 9.5]
+resolutions = [2.0]
 
 # Report figures for clusters.
 if report_clusters:
+    print('-------------------- Running Circular Plots for Leiden Clusters. ---------------------')
     run_circular_plots(resolutions, meta_folder, meta_field, matching_field, folds_pickle, h5_complete_path, h5_additional_path, diversity_key)
 
+print('--------------------- Running Logistic Regression for Leiden Clusters. ---------------------')
 # Run logistic regression for different L1 penalties.
 run_logistic_regression(alphas, resolutions, meta_folder, meta_field, matching_field, folds_pickle, h5_complete_path, h5_additional_path, force_fold, additional_as_fold, diversity_key,
                         use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat, type_composition=type_composition, min_tiles=min_tiles, p_th=0.05)
 
+print('---------------------- Summarizing run ---------------------')
 # Summarize results.
 summarize_run(alphas, resolutions, meta_folder, meta_field, min_tiles, folds_pickle, h5_complete_path, ylim=[min_range_auc,1.01])
 

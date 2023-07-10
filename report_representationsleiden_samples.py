@@ -48,10 +48,10 @@ extensive          = args.extensive
 additional_as_fold = args.additional_as_fold
 
 # Dominating clusters to pull WSI.
-value_cluster_ids = dict()
-value_cluster_ids[1] = []
-value_cluster_ids[0] = []
-only_id = True
+# value_cluster_ids = dict()
+# value_cluster_ids[1] = []
+# value_cluster_ids[0] = []
+# only_id = True
 
 ########################################################
 ############# LUAD vs LUSC #############################
@@ -63,11 +63,11 @@ only_id = True
 
 ########################################################
 ############# LUAD OS ##################################
-## Leiden 2.0 fold 0.
-# value_cluster_ids = dict()
-# value_cluster_ids[0] = [31, 1,37, 0,16, 8, 5]
-# value_cluster_ids[1] = [15,39,41,22,10,14,27]
-# only_id = True
+# Leiden 2.0 fold 0.
+value_cluster_ids = dict()
+value_cluster_ids[0] = [31, 1,37, 0,16, 8, 5]
+value_cluster_ids[1] = [15,39,41,22,10,14,27]
+only_id = True
 
 ########################################################
 ############# LUAD PFS #################################
