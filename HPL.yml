@@ -6,74 +6,79 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
-  - astor=0.8.1=pyh9f0ad1d_0
-  - autograd=1.5=pyhd8ed1ab_0
-  - autograd-gamma=0.5.0=pyh9f0ad1d_0
-  - blas=1.1=openblas
+  - astor=0.8.1=py38h06a4308_0
+  - autograd=1.5=py38h06a4308_0
+  - autograd-gamma=0.5.0=py38h06a4308_0
+  - blas=1.0=mkl
   - bottleneck=1.3.5=py38h7deecbd_0
-  - ca-certificates=2023.01.10=h06a4308_0
+  - brotli=1.0.9=h5eee18b_7
+  - brotli-bin=1.0.9=h5eee18b_7
+  - ca-certificates=2023.05.30=h06a4308_0
   - cached_property=1.5.2=pyha770c72_1
-  - certifi=2022.12.7=py38h06a4308_0
-  - cycler=0.11.0=pyhd8ed1ab_0
+  - certifi=2023.5.7=py38h06a4308_0
+  - cycler=0.11.0=pyhd3eb1b0_0
   - formulaic=0.6.1=pyhd8ed1ab_0
-  - freetype=2.10.4=h0708190_1
-  - future=0.18.3=pyhd8ed1ab_0
-  - giflib=5.2.1=h36c2ea0_2
-  - graphlib-backport=1.0.3=pyhd8ed1ab_0
+  - freetype=2.12.1=h4a9f257_0
+  - future=0.18.3=py38h06a4308_0
+  - giflib=5.2.1=h5eee18b_3
+  - graphlib-backport=1.0.3=py38h06a4308_0
+  - importlib_resources=5.2.0=pyhd3eb1b0_1
+  - intel-openmp=2023.1.0=hdb19cb5_46305
   - interface_meta=1.3.0=pyhd8ed1ab_0
-  - joblib=1.2.0=pyhd8ed1ab_0
-  - jpeg=9e=h166bdaf_1
+  - jpeg=9e=h5eee18b_1
   - kiwisolver=1.4.4=py38h6a678d5_0
   - lcms2=2.12=h3be6417_0
   - ld_impl_linux-64=2.38=h1181459_1
   - lerc=3.0=h295c915_0
-  - libblas=3.9.0=15_linux64_openblas
-  - libcblas=3.9.0=15_linux64_openblas
+  - libbrotlicommon=1.0.9=h5eee18b_7
+  - libbrotlidec=1.0.9=h5eee18b_7
+  - libbrotlienc=1.0.9=h5eee18b_7
   - libdeflate=1.17=h5eee18b_0
   - libffi=3.4.4=h6a678d5_0
   - libgcc-ng=11.2.0=h1234567_1
-  - libgfortran-ng=12.2.0=h69a702a_19
-  - libgfortran5=12.2.0=h337968e_19
+  - libgfortran-ng=11.2.0=h00389a5_1
+  - libgfortran5=11.2.0=h1234567_1
   - libgomp=11.2.0=h1234567_1
-  - liblapack=3.9.0=15_linux64_openblas
-  - libopenblas=0.3.20=pthreads_h78a6416_0
   - libpng=1.6.39=h5eee18b_0
   - libstdcxx-ng=11.2.0=h1234567_1
   - libtiff=4.5.0=h6a678d5_2
   - libwebp=1.2.4=h11a3e52_1
   - libwebp-base=1.2.4=h5eee18b_1
   - lifelines=0.27.7=pyhd8ed1ab_0
-  - lz4-c=1.9.3=h9c3ff4c_1
-  - matplotlib-base=3.4.3=py38hf4fb855_1
+  - lz4-c=1.9.4=h6a678d5_0
+  - matplotlib-base=3.7.1=py38h417a72b_1
+  - mkl=2023.1.0=h6d00ec8_46342
+  - mkl-service=2.4.0=py38h5eee18b_1
+  - mkl_fft=1.3.6=py38h417a72b_1
+  - mkl_random=1.2.2=py38h417a72b_1
+  - munkres=1.1.4=py_0
   - ncurses=6.4=h6a678d5_0
-  - numexpr=2.8.4=py38hd2a5715_1
-  - numpy=1.22.3=py38h99721a1_2
-  - openblas=0.3.20=pthreads_h320a7e8_0
-  - openssl=1.1.1t=h7f8727e_0
-  - pip=23.0.1=py38h06a4308_0
-  - pyparsing=3.0.9=pyhd8ed1ab_0
-  - python=3.8.16=h7a1cb2a_3
-  - python-dateutil=2.8.2=pyhd8ed1ab_0
-  - python_abi=3.8=2_cp38
-  - pytz=2023.3=pyhd8ed1ab_0
+  - numexpr=2.8.4=py38hc78ab66_1
+  - openssl=3.0.9=h7f8727e_0
+  - pip=23.1.2=py38h06a4308_0
+  - pyparsing=3.0.9=py38h06a4308_0
+  - python=3.8.16=h955ad1f_4
+  - python-dateutil=2.8.2=pyhd3eb1b0_0
+  - pytz=2022.7=py38h06a4308_0
   - readline=8.2=h5eee18b_0
-  - scikit-learn=1.0.2=py38h1561384_0
   - seaborn=0.12.2=py38h06a4308_0
-  - setuptools=66.0.0=py38h06a4308_0
-  - six=1.16.0=pyh6c4a22f_0
+  - setuptools=67.8.0=py38h06a4308_0
+  - six=1.16.0=pyhd3eb1b0_1
   - sqlite=3.41.2=h5eee18b_0
-  - threadpoolctl=3.1.0=pyh8a188c0_0
+  - tbb=2021.8.0=hdb19cb5_0
   - tk=8.6.12=h1ccaba5_0
-  - typing-extensions=4.6.2=hd8ed1ab_0
-  - typing_extensions=4.6.2=pyha770c72_0
+  - typing-extensions=4.6.3=py38h06a4308_0
+  - typing_extensions=4.6.3=py38h06a4308_0
   - wheel=0.38.4=py38h06a4308_0
-  - wrapt=1.12.1=py38h497a2fe_3
+  - wrapt=1.14.1=py38h5eee18b_0
   - xz=5.4.2=h5eee18b_0
   - zlib=1.2.13=h5eee18b_0
-  - zstd=1.5.2=ha4553b6_0
+  - zstd=1.5.5=hc292b87_0
   - pip:
+      - adjusttext==0.8
       - anndata==0.8.0
       - anyio==3.7.0
+      - appdirs==1.4.4
       - argon2-cffi==21.3.0
       - argon2-cffi-bindings==21.2.0
       - arrow==1.2.3
@@ -85,18 +90,29 @@ dependencies:
       - cachecontrol==0.13.0
       - cffi==1.15.1
       - charset-normalizer==3.1.0
+      - click==8.1.7
+      - cloudpickle==2.2.1
       - comm==0.1.3
       - contourpy==1.0.7
       - cython==0.29.35
       - debugpy==1.6.7
       - decorator==5.1.1
       - defusedxml==0.7.1
+      - docker-pycreds==0.4.0
+      - ecos==2.0.12
+      - et-xmlfile==1.1.0
       - exceptiongroup==1.1.1
       - executing==1.2.0
+      - fa2==0.3.5
+      - fastcluster==1.2.6
       - fastjsonschema==2.17.1
+      - filelock==3.12.2
       - fonttools==4.39.4
       - fqdn==1.5.1
-      - h5py==3.7.0
+      - gdown==4.7.1
+      - gitdb==4.0.10
+      - gitpython==3.1.32
+      - h5py==3.6.0
       - hdmedians==0.14.2
       - idna==3.4
       - igraph==0.10.4
@@ -125,8 +141,8 @@ dependencies:
       - leidenalg==0.9.1
       - llvmlite==0.40.0
       - lockfile==0.12.2
+      - lxml==4.9.2
       - markupsafe==2.1.2
-      - matplotlib==3.7.1
       - matplotlib-inline==0.1.6
       - mistune==2.0.5
       - msgpack==1.0.5
@@ -140,6 +156,7 @@ dependencies:
       - notebook==6.5.4
       - notebook-shim==0.2.3
       - numba==0.57.0
+      - numpy==1.23.4
       - nvidia-cublas-cu11==11.11.3.6
       - nvidia-cublas-cu12==12.1.3.1
       - nvidia-cuda-cupti-cu11==11.8.87
@@ -156,17 +173,23 @@ dependencies:
       - nvidia-dali-nvtf-plugin==1.16.0+nv22.08
       - nvidia-nccl-cu11==2.16.5
       - nvidia-tensorflow==1.15.5+nv22.08
+      - openpyxl==3.1.2
+      - osqp==0.6.3
       - overrides==7.3.1
       - packaging==23.1
       - pandas==2.0.2
       - pandocfilters==1.5.0
       - parso==0.8.3
+      - pathtools==0.1.2
       - patsy==0.5.3
       - pexpect==4.8.0
       - pickleshare==0.7.5
       - pillow==9.5.0
       - pkgutil-resolve-name==1.3.10
       - platformdirs==3.5.1
+      - plotify==0.1.18
+      - plotly==5.15.0
+      - plottify==1.1
       - prometheus-client==0.17.0
       - prompt-toolkit==3.0.38
       - psutil==5.9.5
@@ -176,10 +199,12 @@ dependencies:
       - pygments==2.15.1
       - pynndescent==0.5.10
       - pyrsistent==0.19.3
+      - pysocks==1.7.1
       - python-json-logger==2.0.7
       - pywavelets==1.4.1
       - pyyaml==6.0
       - pyzmq==25.1.0
+      - qdldl==0.1.7
       - qtconsole==5.4.3
       - qtpy==2.3.1
       - requests==2.31.0
@@ -188,14 +213,22 @@ dependencies:
       - scanpy==1.9.3
       - scikit-bio==0.5.8
       - scikit-image==0.20.0
+      - scikit-learn==1.2.2
+      - scikit-survival==0.20.0
       - scipy==1.9.1
       - send2trash==1.8.2
+      - sentry-sdk==1.29.2
       - session-info==1.0.0
+      - setproctitle==1.3.2
+      - shap==0.42.0
+      - slicer==0.0.7
+      - smmap==5.0.0
       - sniffio==1.3.0
       - soupsieve==2.4.1
       - stack-data==0.6.2
       - statsmodels==0.14.0
       - stdlib-list==0.8.0
+      - tenacity==8.2.2
       - tensorrt-bindings==8.6.1
       - tensorrt-libs==8.6.1
       - terminado==0.17.1
@@ -209,6 +242,7 @@ dependencies:
       - umap-learn==0.5.3
       - uri-template==1.2.0
       - urllib3==2.0.2
+      - wandb==0.15.8
       - wcwidth==0.2.6
       - webcolors==1.13
       - webencodings==0.5.1
