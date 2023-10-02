@@ -116,11 +116,11 @@ def create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta
             for key in storage_dict:
                 # Check for field to include.
                 if key in list_meta_field:
-                    print('storage_dict[key]', storage_dict[key])
-                    print('index', index)
-                    print('storage_dict[key][index] shape', np.shape(storage_dict[key][index]))
-                    print('frame', frame[frame[matching_field].astype(str)==str(h5_individual)][key])
-                    print('frame shape', np.shape(frame[frame[matching_field].astype(str)==str(h5_individual)][key]))
+                    # print('storage_dict[key]', storage_dict[key])
+                    # print('index', index)
+                    # print('storage_dict[key][index] shape', np.shape(storage_dict[key][index]))
+                    # print('frame', frame[frame[matching_field].astype(str)==str(h5_individual)][key])
+                    # print('frame shape', np.shape(frame[frame[matching_field].astype(str)==str(h5_individual)][key]))
                     storage_dict[key][index] = frame[frame[matching_field].astype(str)==str(h5_individual)][key]
                 # Copy all other fiels
                 else:

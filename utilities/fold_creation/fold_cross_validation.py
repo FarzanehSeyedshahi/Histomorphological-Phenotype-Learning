@@ -6,8 +6,9 @@ import pickle
 import math
 
 # Workspace path.
-main_path = '/raid/users/farzaneh/Histomorphological-Phenotype-Learning'
-csv_path = '%s/files/patient_csv_fitered.csv' % main_path
+# main_path = '/raid/users/farzaneh/Histomorphological-Phenotype-Learning'
+main_path = '/mnt/cephfs/sharedscratch/users/fshahi/Projects/Histomorphological-Phenotype-Learning'
+# csv_path = '%s/files/patient_csv_fitered.csv' % main_path
 project   = 'Meso'
 
 def grab_slides_samples(h5_path, tcga_flag=True):
@@ -30,11 +31,17 @@ def grab_slides_samples(h5_path, tcga_flag=True):
     df['samples'] = samples
     return  slides, samples, df
 
-def creat_csv_from_h5(csv_results_path, h5_complete_path):
+def creat_csv_from_h5_wsi(csv_results_path, h5_complete_path):
     with h5py.File(h5_complete_path) as df:
         slides = df['slides'][:].astype(str)
         samples = ['_'.join(slide.split('_')[:2]) for slide in slides]
         final_df = pd.DataFrame({'slides': slides, 'samples': samples, 'hist_subtype': df['hist_subtype'][:].astype(str), 'tiles': df['tiles'][:].astype(str)})
+        final_df.to_csv(csv_results_path)
+    return final_df
+
+def creat_csv_from_h5_tma(csv_results_path, h5_complete_path):
+    with h5py.File(h5_complete_path) as df:
+        final_df = pd.DataFrame({'slides': df['slides'][:].astype(str), 'samples': df['samples'][:].astype(str), 'hist_subtype': df['hist_subtype'][:].astype(str), 'tiles': df['tiles'][:].astype(str)})
         final_df.to_csv(csv_results_path)
     return final_df
 
@@ -89,6 +96,8 @@ def get_folds(meta_df, matching_field, ind_column, num_folds=5, valid_set=False)
 
     # Get initial split for train/test.
     folds = get_frac_split(meta_df, matching_field, ind_column, num_folds=num_folds)
+    for i in range(num_folds):
+        print('Fold %s:' % i, 'train:', len(folds[i]['train']), 'test:', len(folds[i]['test']))
 
     for i in range(num_folds):
         whole_train_samples = folds[i]['train']
@@ -135,7 +144,7 @@ def fit_format(folds):
 
     return slides_folds
 
-def create_csv(representation_csv, patient_csv, csv_results_path):
+def create_csv_wsi(representation_csv, patient_csv, csv_results_path):
     '''This function get metadata file from patient(patient_csv) and tile_vector 
     presentation(representation_csv) and create a new csv file with 
     the wanted columns to combine with the h5 file as a metadata file.(csv_results_path)'''
@@ -146,19 +155,30 @@ def create_csv(representation_csv, patient_csv, csv_results_path):
     
     # reading csv file and get the slides and samples and change the column name as wanted
     df_patient = pd.read_csv(patient_csv, index_col=0)
-    df_patient = df_patient[['Case Number', 'Mesothelioma Type', 'Overall Stage (8th Edition TNM)', 'Survival Status', 'Time to Survival Status (Months)']]
+    df_patient = df_patient[['Case Number', 'Mesothelioma Type', 'N Stage (8th Edition TNM)', 'Survival Status', 'Time to Survival Status (Months)', 'Smoking History', 'WCC Score', 'Desmoplastic Component']]
     df_patient = df_patient.rename(columns={'Case Number': 'case_number', \
                                             'Mesothelioma Type': 'type', \
-                                                'Overall Stage (8th Edition TNM)':'stage',\
+                                                'N Stage (8th Edition TNM)':'stage',\
                                                       'Survival Status': 'os_event_ind', \
-                                                        'Time to Survival Status (Months)': 'os_event_data'})
+                                                        'Time to Survival Status (Months)': 'os_event_data', \
+                                                             'Smoking History': 'smoking_history', \
+                                                                 'WCC Score': 'wcc_score', \
+                                                                     'Desmoplastic Component': 'desmoplastic_component' })
     
     # make the os_event_ind elements to binary. Dead: 1, Alive: 0
     df_patient['os_event_ind'] = df_patient['os_event_ind'].replace('Dead', 1.0)
     df_patient['os_event_ind'] = df_patient['os_event_ind'].replace('Alive', 0.0)
+    df_patient['Meso_type'] = df_patient['type'].replace('Epithelioid', 0.0)
+    df_patient['Meso_type'] = df_patient['Meso_type'].replace('Sarcomatoid', 1.0)
+    df_patient['Meso_type'] = df_patient['Meso_type'].replace('Biphasic', 1.0)
+
+    # replace the nan values with string 'unknown'
+    df_patient['wcc_score'] = df_patient['wcc_score'].replace(np.nan, 'Unknown')
+    df_patient['desmoplastic_component'] = df_patient['desmoplastic_component'].replace(np.nan, 'Unknown')
+    df_patient['smoking_history'] = df_patient['smoking_history'].replace(np.nan, 'Unknown')
 
     df_representations = pd.read_csv(representation_csv, index_col=0)
-    # Extracting the case number from the sampoels
+    # Extracting the case number from the samples
     df_representations['case_number'] = df_representations['samples'].apply(lambda x: int(x.split('_')[1]))
     #merge the two dataframes by case number
     df_representations = pd.merge(df_representations, df_patient, on='case_number', how='left')
@@ -168,26 +188,80 @@ def create_csv(representation_csv, patient_csv, csv_results_path):
     df_representations['hist_subtype'] = df_representations['hist_subtype'][:].astype(str)
     df_representations['type'] = df_representations['type'][:].astype(str)
     df_representations['stage'] = df_representations['stage'][:].astype(str)
+    df_representations['smoking_history'] = df_representations['smoking_history'][:].astype(str)
+    df_representations['wcc_score'] = df_representations['wcc_score'][:].astype(str)
+    df_representations['desmoplastic_component'] = df_representations['desmoplastic_component'][:].astype(str)
+
     df_representations.to_csv(csv_results_path) 
     print(df_representations.head())
     print('csv file is created')
     return df_representations
 
-if __name__ == '__main__':
-    csv_results_path = '%s/files/csv_Meso_250_subsampled_he_complete_with_survival.csv' % main_path
-    pkl_results_path = '%s/files/pkl_Meso_250_subsampled_he_complete.pkl' % main_path
-    h5_complete_path   = '%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete_combined_metadata.h5' % main_path
 
+
+
+def create_csv_tma(patient_csv, representation_csv, csv_results_path):
+    #delete the csv file if it exists
+    if os.path.exists(csv_results_path):
+        os.remove(csv_results_path)
     
-    df_representations = create_csv(patient_csv='%s/files/patient_csv_fitered.csv' % main_path\
-                                    , representation_csv='%s/files/csv_Meso_250_subsampled_he_complete.csv' % main_path,\
-                                        csv_results_path=csv_results_path)
-    
+    # reading csv file and get the slides and samples and change the column name as wanted
+    df_patient = pd.read_csv(patient_csv)
+    df_patient = df_patient[['samples', 'slides', 'type']]
+    df_representations = pd.read_csv(representation_csv, index_col=0)
+
+    #merge the two dataframes by samples   
+    df_representations = pd.merge(df_representations, df_patient, on='slides', how='inner')
+    if df_representations['samples_x'].equals(df_representations['samples_y']):
+        df_representations = df_representations.drop(columns=['samples_y'])
+        df_representations = df_representations.rename(columns={'samples_x': 'samples'})
+    else:
+        print('Error in merging the two dataframes!')
+        return
+
+    df_representations['samples'] = df_representations['samples'][:].astype(str)
+    df_representations['slides'] = df_representations['slides'][:].astype(str)
+    df_representations['tiles'] = df_representations['tiles'][:].astype(str)
+ 
+    df_representations.to_csv(csv_results_path)
+    print('df_representations\n---------------------\n',df_representations)
+    return df_representations
+
+
+
+
+
+if __name__ == '__main__':
+    csv_results_path = '%s/files/csv_lattice_tma_subsampled_he_complete_with_survival.csv' % main_path
+    pkl_results_path = '%s/files/pkl_lattice_tma_subsampled_he_complete.pkl' % main_path
+    h5_complete_path   = '%s/results/BarlowTwins_3/lattice_tma/h224_w224_n3_zdim128/hdf5_lattice_tma_he_complete.h5' % main_path
+
+    representation_csv='%s/files/csv_lattice_tma_subsampled_he_complete.csv' % main_path
+    # patient_csv='%s/files/patient_csv_fitered.csv' % main_path
+    patient_csv = '%s/files/lattice_tma_map.csv' % main_path
+
+    if not os.path.exists(representation_csv):
+        print('Creating csv file from h5 file')
+        df_representations = creat_csv_from_h5_tma(representation_csv, h5_complete_path)
+
+    # add the survival information to the csv file
+    # df_representations = create_csv_wsi(patient_csv=patient_csv\
+    #                                 , representation_csv=representation_csv,\
+    #                                     csv_results_path=csv_results_path)
+    if not os.path.exists(csv_results_path):
+        df_representations = create_csv_tma(patient_csv=patient_csv\
+                                        , representation_csv=representation_csv,\
+                                            csv_results_path=csv_results_path)
+    else:
+        df_representations = pd.read_csv(csv_results_path, index_col=0)
+
+    # add sample slide column
     folds       = get_folds(df_representations, matching_field='slides', ind_column='samples', num_folds=5, valid_set=True)
+
     final_folds = fit_format(folds)
 
     # If no output, all good.
     sanity_check_overlap(folds, num_folds=5)
 
-    # store_data(final_folds, pkl_results_path)
+    store_data(final_folds, pkl_results_path)
     pkl_data = read_pkl(pkl_results_path)

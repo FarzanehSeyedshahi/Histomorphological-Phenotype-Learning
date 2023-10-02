@@ -215,7 +215,7 @@ def cluster_set_images(frame, data_dicts, groupby, set_, leiden_path, dpi):
         csv_information = list()
         images_cluster = list()
         i = 0
-        print('Data dict keys: %s' % data_dicts)
+        # print('Data dict keys: %s' % data_dicts)
 
         for index, original_set in tqdm(combined):
             # print('Index: %s, Original set: %s' % (index, original_set))

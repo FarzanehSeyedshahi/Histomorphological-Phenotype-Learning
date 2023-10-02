@@ -494,6 +494,9 @@ def sample_representation(frame_classification, matching_field, sample, groupby,
 	elif type_ == 'ilr':
 		samples_features = multiplicative_replacement(np.reshape(samples_features, (1,-1)))
 		samples_features = ilr(np.reshape(samples_features, (1,-1)))
+	elif type_ == 'percentage':
+		samples_features = samples_features = multiplicative_replacement(np.reshape(samples_features, (1,-1)))
+
 
 	return samples_features
 
@@ -583,7 +586,6 @@ def prepare_set_representation(frame, matching_field, meta_field, groupby, leide
 	slide_rep_df['slides']   = lr_label[:,0].astype(str)
 	slide_rep_df['tiles']    = lr_label[:,2].astype(int)
 	slide_rep_df = slide_rep_df.set_index('slides')
-
 	return slide_rep_df
 
 '''############### Subtype Classification ###############'''
@@ -729,10 +731,6 @@ def prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition
 						  use_conn=True, use_ratio=False, top_variance_feat=100, remove_clusters=None):
 	# Dataframes.
 	train_df, valid_df, test_df, additional_df = dataframes
-	print('train df info:', train_df.shape)
-	print('valid df info:', valid_df.shape)
-	print('test df info:', test_df.shape)
-	print('additional df info:', additional_df.shape)
 
 	# Clip based on maximum # of months.
 	if event_data_field is not None:

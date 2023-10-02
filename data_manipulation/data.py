@@ -40,3 +40,9 @@ class Data:
         if os.path.isfile(self.hdf5_test) and load:
             self.test = Dataset(self.hdf5_test, patch_h, patch_w, n_channels, batch_size=batch_size, thresholds=thresholds, labels=None, empty=empty)
         print('----------------------------------------------------------------------------------')
+
+        # self.hdf5_additional = os.path.join(self.pathes_path, 'hdf5_%s_combined.h5' % self.dataset_name)
+        # print('--------------------------------------\nAdditional Set:', self.hdf5_additional)
+        # self.additional = None
+        # if os.path.isfile(self.hdf5_additional) and load:
+        #     self.additional = Dataset(self.hdf5_additional, patch_h, patch_w, n_channels, batch_size=batch_size, thresholds=thresholds, labels=None, empty=empty)

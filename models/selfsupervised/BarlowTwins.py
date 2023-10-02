@@ -281,7 +281,8 @@ class RepresentationsPathology():
 		if self.wandb_flag:
 			train_config = save_model_config(self, data)
 			run_name = self.model_name + '-' + data.dataset
-			wandb.init(project='SSL Pathology', entity='adalbertocquiros', name=run_name, config=train_config)
+			# wandb.init(project='SSL Pathology', entity='adalbertocquiros', name=run_name, config=train_config)
+			wandb.init(project='SSL Pathology', entity='farzaneh_uog', name=run_name, config=train_config, resume=True)
 
 		run_epochs = 0
 		saver = tf.train.Saver()

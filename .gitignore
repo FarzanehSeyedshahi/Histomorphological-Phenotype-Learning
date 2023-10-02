@@ -12,3 +12,7 @@ files/*
 */.DS_Store
 utilities/files/indexes_to_remove/
 Transformers
+*.jpg
+*.png
+*__pycache__*
+*.pyc
