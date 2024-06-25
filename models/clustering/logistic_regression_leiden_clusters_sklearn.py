@@ -291,16 +291,16 @@ def get_aucs(model, data, label):
 		additional_data, additional_labels = additional
 
 	# Predictions.
-	# train_pred = model.predict(exog=train_data)
-	train_pred = model.predict(train_data)
+	train_pred = model.predict(exog=train_data)
+	# train_pred = model.predict(train_data)
 	if valid is not None:
-		# valid_pred = model.predict(exog=valid_data)
-		valid_pred = model.predict(valid_data)
-	# test_pred  = model.predict(exog=test_data)
-	test_pred  = model.predict(test_data)
+		valid_pred = model.predict(exog=valid_data)
+		# valid_pred = model.predict(valid_data)
+	test_pred  = model.predict(exog=test_data)
+	# test_pred  = model.predict(test_data)
 	if additional is not None:
-		# additional_pred = model.predict(exog=additional_data)
-		additional_pred = model.predict(additional_data)
+		additional_pred = model.predict(exog=additional_data)
+		# additional_pred = model.predict(additional_data)
 
 	print('train report:', classification_report(list(train_labels[:,label]), list(train_pred), labels=[0,1]))
 	# train_auc = roc_auc_score(y_true=list(train_labels[:,label]), y_score=list(train_pred))
@@ -397,8 +397,8 @@ def classification_performance_stats(data, leiden_clusters, frame_clusters, feat
 		# model 				= LogisticRegression(penalty='l1', solver='liblinear', C=1/alpha, max_iter=1000).fit(train_data, train_labels[:,label])
 		# model = SVC(kernel='linear', C=1/alpha).fit(train_data, train_labels[:,label])
 		#make SVC better
-		model = SVC(kernel='rbf', C=1/alpha, class_weight='balanced').fit(train_data, train_labels[:,label])
-		# model                  = sm.Logit(endog=train_labels[:,label], exog=train_data).fit_regularized(method='l1', alpha=alpha, disp=0)
+		# model = SVC(kernel='rbf', C=1/alpha, class_weight='balanced').fit(train_data, train_labels[:,label])
+		model                  = sm.Logit(endog=train_labels[:,label], exog=train_data).fit_regularized(method='l1', alpha=alpha, disp=0)
 		total_aucs[label-1,:]  = get_aucs(model, data, label)
 
 		# Include information in Clusters DataFrame.
@@ -430,6 +430,35 @@ def run_logistic_regression(alphas, resolutions, meta_folder, meta_field, matchi
 
 	# Loading data first.
 	print('Loading data:')
+	# data_res_folds = dict()
+	# for resolution in resolutions:
+	# 	groupby = 'leiden_%s' % resolution
+	# 	print('\tResolution', groupby)
+	# 	data_res_folds[resolution] = dict()
+	# 	for i, fold in enumerate(folds):
+
+	# 		# Read CSV files for train, validation, test, and additional sets.
+	# 		dataframes, complete_df, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold=additional_as_fold, force_fold=force_fold)
+	# 		train_df, valid_df, test_df, additional_df = dataframes
+
+	# 		# Check clusters and diversity within.
+	# 		frame_clusters, frame_samples = create_frames(complete_df, groupby, meta_field, diversity_key=matching_field, reduction=2)
+
+	# 		# Create representations per sample: cluster % of total sample.
+	# 		data, data_df, features = prepare_data_classes(dataframes, matching_field, meta_field, groupby, leiden_clusters, type_composition, min_tiles,
+	# 													use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat)
+	
+	# 		# Include features that are not the regular leiden clusters.
+	# 		frame_clusters = include_features_frame_clusters(frame_clusters, leiden_clusters, features, groupby)
+
+	# 		# Store representations.
+	# 		data_res_folds[resolution][i] = {'data':data, 'features':features, 'frame_clusters':frame_clusters, 'leiden_clusters':leiden_clusters}
+	# 		# Information.
+	# 		print('\t\tFold', i, 'Features:', len(features), 'Clusters:', len(leiden_clusters))
+			
+	# print()
+
+	# Loading data from saved csvs.
 	data_res_folds = dict()
 	for resolution in resolutions:
 		groupby = 'leiden_%s' % resolution
@@ -438,25 +467,31 @@ def run_logistic_regression(alphas, resolutions, meta_folder, meta_field, matchi
 		for i, fold in enumerate(folds):
 
 			# Read CSV files for train, validation, test, and additional sets.
-			dataframes, complete_df, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold=additional_as_fold, force_fold=force_fold)
-			train_df, valid_df, test_df, additional_df = dataframes
+			# dataframes, complete_df, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold=additional_as_fold, force_fold=force_fold)
+			# train_df, valid_df, test_df, additional_df = dataframes
 
-			# Check clusters and diversity within.
-			frame_clusters, frame_samples = create_frames(complete_df, groupby, meta_field, diversity_key=matching_field, reduction=2)
+			# # Check clusters and diversity within.
+			# frame_clusters, frame_samples = create_frames(complete_df, groupby, meta_field, diversity_key=matching_field, reduction=2)
 
 			# Create representations per sample: cluster % of total sample.
-			data, data_df, features = prepare_data_classes(dataframes, matching_field, meta_field, groupby, leiden_clusters, type_composition, min_tiles,
-														use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat)
+			# data, data_df, features = prepare_data_classes(dataframes, matching_field, meta_field, groupby, leiden_clusters, type_composition, min_tiles,
+			# 											use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat)
+
+			data = pd.read_csv('{}/{}_{}_{}_fold{}.csv'.format(subtype_csvs_path, dataset, type_composition, groupby.replace('.', 'p'), fold_number))
+
+			features = [column for column in data.columns if 'leiden' in column]
 	
 			# Include features that are not the regular leiden clusters.
-			frame_clusters = include_features_frame_clusters(frame_clusters, leiden_clusters, features, groupby)
+			frame_clusters = pd.read_csv('{}/HPC_frames/{}_{}_{}_fold{}_hpc_purity.csv'.format(subtype_csvs_path, dataset, type_composition, groupby.replace('.', 'p'), i))
 
 			# Store representations.
 			data_res_folds[resolution][i] = {'data':data, 'features':features, 'frame_clusters':frame_clusters, 'leiden_clusters':leiden_clusters}
 			# Information.
 			print('\t\tFold', i, 'Features:', len(features), 'Clusters:', len(leiden_clusters))
-			
-	print()
+
+
+
+
 
 	# For alpha value
 	print('Running logistic regression:')
@@ -509,7 +544,7 @@ def run_logistic_regression(alphas, resolutions, meta_folder, meta_field, matchi
 		columns.append('Test f1')
 		if additional_df is not None: columns.append('Additional f1')
 		results_df = pd.DataFrame(all_data, columns=columns)
-		results_df.to_csv(os.path.join(alpha_path, '%s_f1_results_mintiles_%s.csv' % (meta_field, min_tiles)), index=False)
+		# results_df.to_csv(os.path.join(alpha_path, '%s_f1_results_mintiles_%s.csv' % (meta_field, min_tiles)), index=False)
 
 		# Performance figures.
 		box_plot_auc_results(frame=results_df, columns=columns, path_file=os.path.join(alpha_path, '%s_f1_results_mintiles_%s.csv' % (meta_field, min_tiles)))

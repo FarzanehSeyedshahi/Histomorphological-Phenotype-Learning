@@ -50,6 +50,7 @@ def get_x_y(tile_info):
         string = tile_info.split('.')[0]
     else:
         string = str(tile_info)
+    # if TCGA-MESO put - instead of _.
     x, y   = string.split('_')
     return int(x),int(y)
 

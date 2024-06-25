@@ -1,6 +1,8 @@
 # Imports.
 import scanpy as sc
 import anndata
+import anndata as ad
+
 import copy
 import csv
 
@@ -10,15 +12,18 @@ import pandas as pd
 import numpy as np
 
 # Other libraries.
-import random
-import h5py
 import os
 import gc
 
 # Own libs.
 from models.evaluation.folds import load_existing_split
 from models.clustering.data_processing import *
-from models.visualization.attention_maps import get_x_y
+# from models.visualization.attention_maps import get_x_y
+
+# Ignore warnings.
+import warnings
+warnings.filterwarnings('ignore')
+import rapids_singlecell as rsc
 
 
 # For each slide tile, it finds and includes cluster assignations for surrounding tiles.
@@ -170,7 +175,8 @@ def sanity_check_neighbors(adata, dim_columns, neighbors_key='nn_leiden', tabs='
 
 	# Drop problematic instances
 	frame_sub = frame_sub.drop(original_frame_locs)
-	return True, frame_sub
+	# return True, frame_sub
+	return False
 
 
 # Runs clustering flow on given frame.
@@ -185,6 +191,7 @@ def run_clustering(frame, dim_columns, rest_columns, resolution, groupby, n_neig
 	frame_sub = frame.sample(n=subsample, random_state=1)
 
 	problematic_flag = True
+	# problematic_flag = False
 	while problematic_flag:
 		problematic_flag = False
 		print('%s%s File' % (tabs, adata_name))
@@ -194,13 +201,17 @@ def run_clustering(frame, dim_columns, rest_columns, resolution, groupby, n_neig
 		sc.tl.pca(adata, svd_solver='arpack', n_comps=adata.X.shape[1] - 1)
 		print('%sNearest Neighbors' % tabs)
 		sc.pp.neighbors(adata, n_neighbors=n_neighbors, n_pcs=adata.X.shape[1] - 1, method='umap', metric='euclidean', key_added='nn_leiden')
+		# sc.pp.neighbors(adata, n_neighbors=n_neighbors, n_pcs=adata.X.shape[1] - 1, method='rapids', metric='euclidean', key_added='nn_leiden')
 
 		# Sanity check, some representation instances introduce a bug where the # NN is smaller than specified and breaks scanpy
-		problematic_flag, frame_sub = sanity_check_neighbors(adata, dim_columns, neighbors_key='nn_leiden', tabs=tabs)
+		# problematic_flag, frame_sub = sanity_check_neighbors(adata, dim_columns, neighbors_key='nn_leiden', tabs=tabs)
+		problematic_flag = sanity_check_neighbors(adata, dim_columns, neighbors_key='nn_leiden', tabs=tabs)
 
 	# Leiden clustering.
 	print('%sLeiden' % tabs, resolution)
-	sc.tl.leiden(adata, resolution=resolution, key_added=groupby, neighbors_key='nn_leiden')
+	# sc.tl.leiden(adata, resolution=resolution, key_added=groupby, neighbors_key='nn_leiden')
+	rsc.tl.leiden(adata, resolution=resolution, key_added=groupby, neighbors_key='nn_leiden')
+	print('Clusters found!')
 
 	# Save to csv.
 	adata_to_csv(adata, main_cluster_path, adata_name)
@@ -224,6 +235,7 @@ def run_clustering(frame, dim_columns, rest_columns, resolution, groupby, n_neig
 def assign_clusters(frame, dim_columns, rest_columns, groupby, adata, main_cluster_path, adata_name, include_connections=False, save_adata=False, tabs='\t\t'):
 	# If frame excceds maximum size, divide into smaller chuncks to avoid memory overrun.
 	max_size = 500000
+	print('Additional frame size:', frame.shape[0])
 	if frame.shape[0] > max_size:
 		frame = frame.reset_index()
 		num_chuncks = np.ceil(frame.shape[0]/max_size).astype(int)
@@ -240,7 +252,6 @@ def assign_clusters(frame, dim_columns, rest_columns, groupby, adata, main_clust
 		adata_test = anndata.AnnData(X=frame[dim_columns].to_numpy(), obs=frame[rest_columns].astype('category'))
 
 		# Assign cluster based on nearest neighbors from reference frame assignations.
-		print('%sNearest Neighbors on data' % tabs)
 		sc.tl.ingest(adata_test, adata, obs=groupby, embedding_method='pca', neighbors_key='nn_leiden')
 
 		# Looks and dumps surrounding tile leiden connections per tile.
@@ -250,7 +261,6 @@ def assign_clusters(frame, dim_columns, rest_columns, groupby, adata, main_clust
 		# Keep H5ad file.
 		if save_adata:
 			adata_test.write(os.path.join(main_cluster_path, adata_name + '_%s.h5ad' % i), compression='gzip')
-
 		mapped_frames.append(pd.DataFrame(adata_test.obs).copy(deep=True))
 		del adata_test
 
@@ -266,7 +276,9 @@ def assign_additional_only(meta_field, rep_key, h5_complete_path, h5_additional_
 	# Get folds from existing split.
 	folds = load_existing_split(folds_pickle)
 
+	print('h5_additional_path file:', h5_additional_path)
 	additional_frame, additional_dims, additional_rest = representations_to_frame(h5_additional_path, meta_field=meta_field, rep_key=rep_key)
+	print('Additional frame size:', additional_frame.shape[0])
 
 	# Setup folder esqueme
 	main_cluster_path = h5_complete_path.split('hdf5_')[0]
@@ -353,28 +365,28 @@ def run_leiden(meta_field, matching_field, rep_key, h5_complete_path, h5_additio
 
 			### Train set.
 			failed = False
-			try:
-				train_frame = complete_frame[complete_frame[matching_field].isin(train_samples)]
-				if train_frame.shape[0] == 0:
-					print('No match between fold train samples [%s] and H5 file matching_field [%s]' % (train_samples[0], complete_frame[matching_field][0]))
-					exit()
-				adata_name = h5_complete_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
-				adata_train, subsample = run_clustering(train_frame, complete_dims, complete_rest, resolution, groupby, n_neighbors, main_cluster_path, '%s_subsample' % adata_name,
-														subsample=subsample, include_connections=include_connections, save_adata=True)
+			# try:
+			train_frame = complete_frame[complete_frame[matching_field].isin(train_samples)]
+			if train_frame.shape[0] == 0:
+				print('No match between fold train samples [%s] and H5 file matching_field [%s]' % (train_samples[0], complete_frame[matching_field][0]))
+				exit()
+			adata_name = h5_complete_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
+			adata_train, subsample = run_clustering(train_frame, complete_dims, complete_rest, resolution, groupby, n_neighbors, main_cluster_path, '%s_subsample' % adata_name,
+													subsample=subsample, include_connections=include_connections, save_adata=True)
 
-				if subsample is not None:
-					assign_clusters(train_frame, complete_dims, complete_rest, groupby, adata_train, main_cluster_path, adata_name, include_connections=include_connections, save_adata=save_adata)
+			if subsample is not None:
+				assign_clusters(train_frame, complete_dims, complete_rest, groupby, adata_train, main_cluster_path, adata_name, include_connections=include_connections, save_adata=save_adata)
 
-			except Exception as ex:
-				print('\t\tIssue running Leiden %s on fold %s Train Set' % (resolution, i))
-				failed = True
+			# except Exception as ex:
+			# 	print('\t\tIssue running Leiden %s on fold %s Train Set' % (resolution, i))
+			# 	failed = True
 
-				if hasattr(ex, 'message'):
-					print('\t\tException', ex.message)
-				else:
-					print('\t\tException', ex)
-			finally:
-				gc.collect()
+			# 	if hasattr(ex, 'message'):
+			# 		print('\t\tException', ex.message)
+			# 	else:
+			# 		print('\t\tException', ex)
+			# finally:
+			# 	gc.collect()
 
 			# Do not even try if train failed.
 			if failed:

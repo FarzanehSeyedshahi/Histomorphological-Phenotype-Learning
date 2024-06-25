@@ -65,8 +65,10 @@ additional_as_fold = args.additional_as_fold
 ############# LUAD OS ##################################
 # Leiden 2.0 fold 0.
 value_cluster_ids = dict()
-value_cluster_ids[0] = [31, 1,37, 0,16, 8, 5]
-value_cluster_ids[1] = [15,39,41,22,10,14,27]
+# value_cluster_ids[0] = [31, 1,37, 0,16, 8, 5]
+# value_cluster_ids[1] = [15,39,41,22,10,14,27]
+value_cluster_ids[0] = [ 0,1]
+value_cluster_ids[1] = [ 0,1,2]
 only_id = True
 
 ########################################################
@@ -85,6 +87,7 @@ if dbs_path is None:
     dbs_path = os.path.dirname(os.path.realpath(__file__))
 
 # Leiden convention name.
+# for resolution in 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.0, 9.0]:
 groupby = 'leiden_%s' % resolution
 
 # Dataset images.
@@ -100,4 +103,4 @@ plot_wsi_clusters(groupby, meta_folder, matching_field, meta_field, data, fold, 
 
 # Save WSI overlay with clusters.
 # plot_wsi_clusters_interactions(groupby, meta_folder, 'slides', meta_field, data, fold, h5_complete_path, h5_additional_path, additional_as_fold, dpi, min_tiles, manifest_csv=manifest_csv,
-#                                inter_dict=inter_dict, type_='percent', only_id=only_id, n_wsi_samples=2)
+                            #    inter_dict=inter_dict, type_='percent', only_id=only_id, n_wsi_samples=2)

@@ -376,6 +376,8 @@ def plot_wsi_clusters(groupby, meta_folder, matching_field, meta_field, data, fo
     # Read frames.
     _, frame_complete, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, fold, [[],[],[]], h5_complete_path, h5_additional_path, additional_as_fold, force_fold=None)
     colors = sns.color_palette('tab20', len(leiden_clusters))
+    # dirty temp for now about mesothelioma # TODO: remove
+    frame_complete['Meso_type'] = frame_complete['type'].apply(lambda x: 0 if x == 'Epithelioid' else 1)
 
     # Read GDC Manifest
     gdc_frame = pd.read_csv(manifest_csv, delimiter='\t')
@@ -391,7 +393,7 @@ def plot_wsi_clusters(groupby, meta_folder, matching_field, meta_field, data, fo
         all_value_slides = slide_rep_df[slide_rep_df[meta_field]==value].index.tolist()
         selected_slides = get_slides_wsi_overlay(all_value_slides, slide_rep_df[leiden_clusters], value_cluster_ids[value], only_id=only_id, n_wsi_samples=n_wsi_samples)
         for cluster_id in selected_slides:
-            print('\tCluster %s' % cluster_id)
+            print('\tCluster Id:%s' % cluster_id)
             for slide in selected_slides[cluster_id]:
                 wsi, wsi_c, slide_clusters = get_wsi_arrays(frame_complete, groupby, slide, img_size=224, downsample=2, img_dicts=data_dicts, colors=colors, pad_pixels=0, legend_margin=1000)
                 try:

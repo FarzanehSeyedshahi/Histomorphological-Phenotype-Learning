@@ -1,5 +1,6 @@
 # Imports
 from matplotlib.font_manager import FontProperties
+from sklearn.preprocessing import OneHotEncoder
 import matplotlib.pyplot as plt
 from sklearn.metrics import *
 import statsmodels.api as sm
@@ -39,7 +40,6 @@ def summarize_stat_clusters_across_folds(data, meta_field, frame_clusters, alpha
 		lr_coef_pvals = lr_folds[[groupby, 'P>|z|_%s' % label]].copy(deep=True)
 		lr_coef       = lr_folds[[groupby, 'coef_%s' % label]].copy(deep=True)
 		lr_coef_se    = lr_folds[[groupby, 'se']].copy(deep=True)
-
 		lr_folds = lr_folds.groupby(groupby).mean().reset_index()
 		lr_folds = lr_folds.sort_values(by=groupby)
 
@@ -47,8 +47,13 @@ def summarize_stat_clusters_across_folds(data, meta_field, frame_clusters, alpha
 		avgs = list()
 		ses  = list()
 		for i in lr_folds[groupby]:
-			average = np.average(lr_coef[lr_coef[groupby]==i]['coef_%s' % label].values, weights=counts)
-			std = np.sqrt(np.sum((counts - 1) * (lr_coef_se[lr_coef_se[groupby]==i]['se'].values**2))/(np.sum(counts)- counts.shape[0]))
+			values_coef = lr_coef[lr_coef[groupby]==i]['coef_%s' % label].values
+			values_se   = lr_coef_se[lr_coef_se[groupby]==i]['se'].values
+			if len(values_coef) != len(counts):
+				# cut-off the last value of the counts
+				counts = counts[:-abs(len(values_coef)-len(counts))]
+			average = np.average(values_coef, weights=counts)
+			std = np.sqrt(np.sum((counts - 1) * (values_se**2))/(np.sum(counts)- counts.shape[0]))
 			avgs.append(average)
 			ses.append(std)
 		lr_folds['coef_%s' % label] = avgs
@@ -138,10 +143,10 @@ def box_plot_frame(frame, columns, ax, ylim):
 	all_data = pd.DataFrame(all_data, columns=columns)
 
 	meanprops={"marker":"o", "markerfacecolor":"red", "markeredgecolor":"black", "markersize":"6"}
-	sns.pointplot(x='Leiden', hue='Set', y='AUC', data=all_data, ax=ax, linewidth=0.25, dodge=.4, join=False, capsize=.04, markers='s')
+	sns.pointplot(x='Leiden', hue='Set', y='AUC', data=all_data, ax=ax, dodge=.4, join=False, capsize=.04, markers='s', palette='Set2')
 	if ylim is not None:
 		ax.set_ylim(ylim)
-	ax.set_title('Leiden + Logistic Regression', fontweight='bold', fontsize=18)
+	ax.set_title('Logistic Regression', fontweight='bold', fontsize=18)
 	ax.legend(loc='upper left')
 
 # Point plots for logistic regression performance per Leiden clustering.
@@ -167,6 +172,7 @@ def alpha_box_plot_auc_results(alphas, meta_folder, meta_field, min_tiles, h5_co
 	main_cluster_path = h5_complete_path.split('hdf5_')[0]
 	main_cluster_path = os.path.join(main_cluster_path, meta_folder)
 
+	results_df_list = list()
 	for label in labels:
 		cluster_stats     = pd.read_csv(os.path.join(main_cluster_path, 'clusters_stats_mintiles_%s_label%s.csv' % (min_tiles, label)))
 		for i, alpha in enumerate(alphas):
@@ -178,6 +184,12 @@ def alpha_box_plot_auc_results(alphas, meta_folder, meta_field, min_tiles, h5_co
 			results_df = pd.read_csv(results_csv)
 			box_plot_frame(results_df, results_df.columns, ax=ax_dict[str(i)], ylim=ylim)
 			ax_dict[str(i)].set_title('Alpha %s' % alpha, fontweight='bold', fontsize=18)
+			# adding alpha to the dataframe as a column
+			results_df['alpha'] = alpha
+			results_df_list.append(results_df)
+		# save the csv for the summary of all alphas
+		results_df = pd.concat(results_df_list, axis=0)
+		results_df.to_csv(os.path.join(main_cluster_path, 'alphas_summary_auc_mintiles_%s_label%s.csv' % (min_tiles, label)), index=False)
 
 		# Snap together the 3 axis for the table.
 		gs = ax_dict['A'].get_gridspec()
@@ -312,7 +324,8 @@ def include_coefficients(model, frame_clusters_orig, features, label, groupby):
 	for column in ['coef', 'P>|z|','[0.025','0.975]']:
 		frame_clusters['%s_%s' % (column, label)] = [np.inf]*frame_clusters.shape[0]
 		for i, cluster_id in enumerate(features):
-			frame_clusters.loc[frame_clusters[groupby]==cluster_id, '%s_%s' % (column, label)] = float(results_df.loc['x%s' % str(int(i)+1), column])
+			frame_clusters.loc[frame_clusters[groupby]==int(cluster_id), '%s_%s' % (column, label)] = float(results_df.loc['x%s' % str(int(i)+1), column])
+	# print(frame_clusters)
 
 	return frame_clusters
 
@@ -354,7 +367,7 @@ def classification_performance_stats(data, leiden_clusters, frame_clusters, feat
 	total_aucs = np.zeros(shape_aucs)
 	cms        = dict()
 	for label in labels:
-		model                  = sm.Logit(endog=train_labels[:,label], exog=train_data).fit_regularized(method='l1', alpha=alpha, disp=0)
+		model                  = sm.Logit(endog=train_labels[:,label], exog=train_data).fit_regularized(method='l1_cvxopt_cp',alpha=alpha, maxiter=1000, disp=False)
 		total_aucs[label-1,:]  = get_aucs(model, data, label)
 
 		# Include information in Clusters DataFrame.
@@ -391,23 +404,78 @@ def run_logistic_regression(alphas, resolutions, meta_folder, meta_field, matchi
 		print('\tResolution', groupby)
 		data_res_folds[resolution] = dict()
 		for i, fold in enumerate(folds):
+			# # Read CSV files for train, validation, test, and additional sets.
+			# dataframes, complete_df, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold=additional_as_fold, force_fold=force_fold)
+			# train_df, valid_df, test_df, additional_df = dataframes
+			# print('Leiden Clsuters:', leiden_clusters)
+
+			# # add Meso_type based on the type column. (Epithelioid:0 Sarcomatoid or Biphasic:1)
+			# complete_df['Meso_type'] = complete_df['type'].apply(lambda x: 0 if x == 'Epithelioid' else 1)
+			# for df in dataframes:
+			# 	df['Meso_type'] = df['type'].apply(lambda x: 0 if x == 'Epithelioid' else 1)
+
+			# # Check clusters and diversity within.
+			# frame_clusters, frame_samples = create_frames(complete_df, groupby, meta_field, diversity_key=matching_field, reduction=2)
+
+			# # Create representations per sample: cluster % of total sample.
+			# data, data_df, features = prepare_data_classes(dataframes, matching_field, meta_field, groupby, leiden_clusters, type_composition, min_tiles,
+			# 											   use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat)
+			# print('Features:', features)
+
+			# # Include features that are not the regular leiden clusters.
+			# frame_clusters = include_features_frame_clusters(frame_clusters, leiden_clusters, features, groupby)
+
+			# # Store representations.
+			# data_res_folds[resolution][i] = {'data':data, 'features':features, 'frame_clusters':frame_clusters, 'leiden_clusters':leiden_clusters}
+
+			# # Information.
+			# print('\t\tFold', i, 'Features:', len(features), 'Clusters:', len(leiden_clusters))
+
 			# Read CSV files for train, validation, test, and additional sets.
-			dataframes, complete_df, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold=additional_as_fold, force_fold=force_fold)
-			train_df, valid_df, test_df, additional_df = dataframes
 
-			# Check clusters and diversity within.
-			frame_clusters, frame_samples = create_frames(complete_df, groupby, meta_field, diversity_key=matching_field, reduction=2)
+			dataset = 'Meso_500' #TODO: make both names more dynamic
+			additional_dataset = 'TCGA_MESO'
+			subsampling = True
+			if not use_conn:
+				subtype_csvs_path = h5_complete_path.split('/hdf5_')[0] + '/{}/subtype_csvs'.format(meta_folder)			
+				data_df = pd.read_csv('{}/{}_{}_{}_fold{}.csv'.format(subtype_csvs_path, dataset, type_composition, groupby.replace('.', 'p'), i))
+				additional_df = pd.read_csv('{}/{}_{}_{}_fold{}_additional.csv'.format(subtype_csvs_path, additional_dataset, type_composition, groupby.replace('.', 'p'), i))
+			else:
+				print('Using connectivity features')
+				subtype_csvs_path = h5_complete_path.split('/hdf5_')[0] + '/{}/subtype_csvs_conn'.format(meta_folder)
+				data_df = pd.read_csv('{}/{}_{}_{}_fold{}_conn.csv'.format(subtype_csvs_path, dataset, type_composition, groupby.replace('.', 'p'), i))
+				additional_df = pd.read_csv('{}/{}_{}_{}_fold{}_additional_conn.csv'.format(subtype_csvs_path, additional_dataset, type_composition, groupby.replace('.', 'p'), i))
+			
+			# reaname column Meso_type_y to Meso_type
+			if 'Meso_type_x' in additional_df.columns:
+				additional_df = additional_df.rename(columns={'Meso_type_x': 'Meso_type'})
+			if 'Meso_type_x' in data_df.columns:
+				data_df = data_df.rename(columns={'Meso_type_x': 'Meso_type'})
 
-			# Create representations per sample: cluster % of total sample.
-			data, data_df, features = prepare_data_classes(dataframes, matching_field, meta_field, groupby, leiden_clusters, type_composition, min_tiles,
-														   use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat)
+			
 
+			meso_col_ind = data_df.columns.get_loc(meta_field)
+			meso_col_ind_additional = additional_df.columns.get_loc(meta_field)
+			leiden_clusters = np.arange(meso_col_ind-2)
+			features = [str(i) for i in leiden_clusters]
+			labels = np.array(data_df.iloc[:, meso_col_ind].values.astype(int).tolist())
+			additional_labels = np.array(additional_df.iloc[:, meso_col_ind_additional].values.astype(int).tolist())
+			
+			
+			labels = OneHotEncoder().fit_transform(labels.reshape(-1,1)).toarray()
+			additional_labels = OneHotEncoder().fit_transform(additional_labels.reshape(-1,1)).toarray()
+			
+			train_df = data_df[data_df['original_set'] == 'train']
+			valid_df = data_df[data_df['original_set'] == 'valid']
+			test_df = data_df[data_df['original_set'] == 'test']
+			data = [[train_df[features].to_numpy(), labels[train_df.index]], [valid_df[features].to_numpy(), labels[valid_df.index]], [test_df[features].to_numpy(), labels[test_df.index]], [additional_df[features].to_numpy(), additional_labels[additional_df.index]]]
+	
+	
 			# Include features that are not the regular leiden clusters.
-			frame_clusters = include_features_frame_clusters(frame_clusters, leiden_clusters, features, groupby)
+			frame_clusters = pd.read_csv('{}/HPC_frames/{}_{}_{}_fold{}_hpc_purity.csv'.format(subtype_csvs_path, dataset, type_composition, groupby.replace('.', 'p'), i), index_col=0)
 
 			# Store representations.
 			data_res_folds[resolution][i] = {'data':data, 'features':features, 'frame_clusters':frame_clusters, 'leiden_clusters':leiden_clusters}
-
 			# Information.
 			print('\t\tFold', i, 'Features:', len(features), 'Clusters:', len(leiden_clusters))
 
@@ -435,6 +503,23 @@ def run_logistic_regression(alphas, resolutions, meta_folder, meta_field, matchi
 
 				# Logistic regression
 				try:
+					if subsampling:
+						# Subsampling the imbalance data
+						from imblearn.over_sampling import SMOTE, ADASYN, SVMSMOTE # SMOTE
+						from imblearn.combine import SMOTEENN, SMOTETomek # SMOTETomek
+						sm = SMOTETomek(random_state=42)
+						
+						for df in data:
+							df[0], df[1] = sm.fit_resample(df[0], df[1])
+							df[1] = OneHotEncoder().fit_transform(df[1].reshape(-1, 1)).toarray()
+						
+						# Nomalize data
+						# from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+						# scaler = MinMaxScaler()
+						# for df in data:
+						# 	df[0] = scaler.fit_transform(df[0])
+
+
 					frame_clusters, aucs, cms = classification_performance_stats(data, leiden_clusters, frame_clusters, features, groupby, alpha=alpha)
 					print('\t\t\tFold %s %-3s features Train/Validation/Test/Additional AUCs:' % (i, len(features)), np.round(aucs,2))
 				except Exception as ex:

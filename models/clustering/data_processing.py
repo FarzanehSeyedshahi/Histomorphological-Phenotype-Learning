@@ -35,6 +35,7 @@ def representations_to_frame(h5_path, meta_field, rep_key='z_latent', check_meta
 	if h5_path is not None:
 		print('Loading representations:', h5_path)
 		with h5py.File(h5_path, 'r') as content:
+			print('Keys:', content.keys())
 			keys = [str(key) for key in content.keys()]
 			if (str(meta_field) not in keys) and check_meta:
 				print('Warning: Meta field not found on H5 File datasets')
@@ -108,43 +109,64 @@ def read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h
 	else:
 		# Train, valid, and test set.
 		adata_name   = h5_complete_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
-		print('Adata name:', adata_name)
 		train_csv    = os.path.join(adatas_path, '%s_train.csv' % adata_name)
 		if not os.path.isfile(train_csv):
-			print('Train csv not found:', train_csv)
 			train_csv    = os.path.join(adatas_path, '%s.csv' % adata_name)
-		print('Train csv:', train_csv)
 		valid_csv    = os.path.join(adatas_path, '%s_valid.csv' % adata_name)
 		test_csv     = os.path.join(adatas_path, '%s_test.csv' % adata_name)
 
 
 		# Gather all sets for clustering. 
-		train_df    = pd.read_csv(train_csv)
-		test_df     = pd.read_csv(test_csv)
-		complete_pd = [train_df, test_df]
+		train_df     = pd.read_csv(train_csv)
+		complete_pd = [train_df]
+		if os.path.isfile(test_csv):
+			test_df     = pd.read_csv(test_csv)
+			complete_pd.append(test_df)
 		if os.path.isfile(valid_csv):
 			valid_df = pd.read_csv(valid_csv)
 			complete_pd.append(valid_df)
 		complete_df  = pd.concat(complete_pd, ignore_index=True)
 
-		train_df    = complete_df[complete_df[matching_field].astype(str).isin(train_samples)]
-		test_df     = complete_df[complete_df[matching_field].astype(str).isin(test_samples)]
-		if train_df.shape[0] == 0 or test_df.shape[0] == 0:
+		if type(train_samples[0]) == str:
+			train_df    = complete_df[complete_df[matching_field].astype(str).isin(train_samples)]
+		else:
+			train_df    = complete_df[complete_df[matching_field].isin(train_samples)]
+		test_df = None
+		if len(test_samples) > 0:
+			if type(test_samples[0]) == str:
+				test_df     = complete_df[complete_df[matching_field].astype(str).isin(test_samples)]
+			else:
+				test_df     = complete_df[complete_df[matching_field].isin(test_samples)]
+		# test_df     = complete_df[complete_df[matching_field].astype(str).isin(test_samples)]
+		# if train_df.shape[0] == 0 or test_df.shape[0] == 0:
+		if train_df.shape[0] == 0:
 			print('Warning:')
 			print('\tTrain set DataFrame samples:', train_df.shape[0])
-			print('\tTest  set DataFrame samples:', test_df.shape[0])
+			# print('\tTest  set DataFrame samples:', test_df.shape[0])
 			print('Example of instances in DataFrame[%s]:' % matching_field, complete_df[matching_field].loc[0])
 			print('Example of instances in pickle[%s]:   ' % matching_field, train_samples[:5])
 		valid_df    = None
 		if len(valid_samples) > 0:
-			valid_df = complete_df[complete_df[matching_field].astype(str).isin(valid_samples)]
+			if type(valid_samples[0]) == str:
+				valid_df = complete_df[complete_df[matching_field].astype(str).isin(valid_samples)]
+			else:
+				valid_df = complete_df[complete_df[matching_field].isin(valid_samples)]
 
 		# Additional set.
 		additional_df = None
 		if h5_additional_path is not None:
-			adata_name     = h5_additional_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
-			additional_csv = os.path.join(adatas_path, '%s.csv' % adata_name)
-			additional_df = pd.read_csv(additional_csv)
+			try:
+				adata_name     = h5_additional_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
+				additional_csv = os.path.join(adatas_path, '%s.csv' % adata_name)
+				additional_df = pd.read_csv(additional_csv)
+			except:
+				# TODO: Fix this.
+				adata_name     = h5_additional_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
+				temp = adatas_path.replace('meso_subtypes_nn400', 'removal')
+				additional_csv = os.path.join(temp, '%s.csv' % adata_name)
+				print('Additional csv:', additional_csv)
+				additional_df = pd.read_csv(additional_csv)
+
 
 		# Get clusters from the reference clustering train set.
 		leiden_clusters = np.unique(complete_df[groupby].values.astype(int))
@@ -158,7 +180,7 @@ def read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h
 		leiden_clusters = np.array(range(np.max(leiden_clusters)+1))
 
 	train_df = train_df.dropna(subset=[groupby])
-	test_df = test_df.dropna(subset=[groupby])
+	if test_df is not None: test_df = test_df.dropna(subset=[groupby])
 	complete_df = complete_df.dropna(subset=[groupby])
 	if valid_df is not None: valid_df = valid_df.dropna(subset=[groupby])
 	if additional_df is not None: additional_df = additional_df.dropna(subset=[groupby])
@@ -476,10 +498,14 @@ def sample_representation(frame_classification, matching_field, sample, groupby,
 	samples_features = [0]*len(leiden_clusters)
 	# Get cluster counts for sample.
 	clusters_slide, clusters_counts = np.unique(frame_classification[frame_classification[matching_field]==sample][groupby], return_counts=True)
+	print('Clusters:', clusters_slide)
+	print('Counts:', clusters_counts)
+	
 	# Map to vector representation dimensions.
 	for clust_id, count in zip(clusters_slide, clusters_counts):
 		samples_features[int(clust_id)] = count
 	samples_features = np.array(samples_features, dtype=np.float64)
+	counts_features  = np.array(samples_features, dtype=np.float64)
 	samples_features = np.array(samples_features)/np.sum(samples_features)
 
 	# Aitchison Space transformations.
@@ -495,9 +521,11 @@ def sample_representation(frame_classification, matching_field, sample, groupby,
 		samples_features = multiplicative_replacement(np.reshape(samples_features, (1,-1)))
 		samples_features = ilr(np.reshape(samples_features, (1,-1)))
 	elif type_ == 'percentage':
-		samples_features = samples_features = multiplicative_replacement(np.reshape(samples_features, (1,-1)))
+		samples_features = multiplicative_replacement(np.reshape(samples_features, (1,-1)))
+	elif type_ == 'count':
+		samples_features = multiplicative_replacement(np.reshape(counts_features, (1,-1)))
 
-
+	print('Samples features:', samples_features)
 	return samples_features
 
 ''' ############### Set Representations for CSV ############### '''
@@ -518,7 +546,12 @@ def build_cohort_representations(meta_folder, meta_field, matching_field, groupb
 
 	# Read CSV files for train, validation, test, and additional sets.
 	dataframes, frame_complete, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, fold_number, fold, h5_complete_path, h5_additional_path)
-	train_df, valid_df, test_df, additional_df = dataframes
+
+	# Add meso_type column to the frame_complete
+	frame_complete['Meso_type'] = frame_complete['type'].apply(lambda x: 0 if x == 'Epithelioid' else 1)
+	# train_df, valid_df, test_df, additional_df = dataframes
+	for df in dataframes:
+		df['Meso_type'] = df['type'].apply(lambda x: 0 if x == 'Epithelioid' else 1)
 
 	# Check clusters and diversity within.
 	frame_clusters, frame_samples = create_frames(frame_complete, groupby, meta_field, diversity_key=matching_field, reduction=reduction)
@@ -568,6 +601,7 @@ def prepare_set_representation(frame, matching_field, meta_field, groupby, leide
 	lr_data  = list()
 	lr_label = list()
 	i = 0
+	print('Samples:', pd.unique(frame[matching_field]))
 	for sample in pd.unique(frame[matching_field]):
 		num_tiles = frame[frame[matching_field]==sample].shape[0]
 		if num_tiles<min_tiles:
@@ -642,7 +676,10 @@ def prepare_data_classes(dataframes, matching_field, meta_field, groupby, leiden
 	if valid_df is not None:
 		valid, valid_slides_df, _,             _         = prepare_set_classes(valid_df, matching_field, meta_field, groupby, leiden_clusters, type_=type_composition, min_tiles=min_tiles,
 																			   use_conn=use_conn, own_corr=own_corr, use_ratio=use_ratio, top_variance_feat=top_variance_feat, keep_features=keep_features, return_tiles=return_tiles)
-	test,  test_slides_df,  _,             _         = prepare_set_classes(test_df,  matching_field, meta_field, groupby, leiden_clusters, type_=type_composition, min_tiles=min_tiles,
+	test			= None
+	test_slides_df  = None
+	if test_df is not None:
+		test,  test_slides_df,  _,             _         = prepare_set_classes(test_df,  matching_field, meta_field, groupby, leiden_clusters, type_=type_composition, min_tiles=min_tiles,
 																		   use_conn=use_conn, own_corr=own_corr, use_ratio=use_ratio, top_variance_feat=top_variance_feat, keep_features=keep_features, return_tiles=return_tiles)
 	additional           = None
 	additional_slides_df = None
@@ -655,6 +692,11 @@ def prepare_data_classes(dataframes, matching_field, meta_field, groupby, leiden
 '''############### Survival Regression ###############'''
 # Trim maximum time for survival event.
 def trim_event_data(frame, event_data_field, max_months=12.0*12.0):
+	# if there is nan in event data, replace with 0.
+	frame[event_data_field] = frame[event_data_field].fillna(0)
+	# if there is inf in event data, replace with max_months.
+	frame[event_data_field] = frame[event_data_field].replace([np.inf, -np.inf], max_months)
+	
 	event_data = np.clip(frame[event_data_field].values.astype(float), a_min=0.0, a_max=max_months).tolist()
 	frame =  frame.drop(columns=[event_data_field])
 	frame[event_data_field] = event_data
@@ -752,13 +794,11 @@ def prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition
 		valid_slides_df, _, _ = prepare_set_survival(valid_df, matching_field, groupby, leiden_clusters, type_composition, event_ind_field, event_data_field, min_tiles=min_tiles,
 													 use_conn=use_conn, own_corr=True, use_ratio=use_ratio, top_variance_feat=top_variance_feat, keep_features=keep_features)
 	
-	print('valid_slides_df info after set survival:', train_slides_df.shape)
 	additional_slides_df = None
 	if additional_df is not None:
 		additional_slides_df, _, _  = prepare_set_survival(additional_df, matching_field, groupby, leiden_clusters, type_composition, event_ind_field, event_data_field, min_tiles=min_tiles,
 														   use_conn=use_conn, own_corr=True, use_ratio=use_ratio, top_variance_feat=top_variance_feat, keep_features=keep_features)
 
-	print('additional_slides_df info after set survival:', train_slides_df.shape)
 	# TODO - Experimental remove 'background' clusters towards a slide.
 	if remove_clusters is not None:
 		features = [cluster_id for cluster_id in features if cluster_id not in remove_clusters]

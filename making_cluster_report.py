@@ -12,11 +12,11 @@ PIL.Image.MAX_IMAGE_PIXELS = 320000000
 
 # Function to create PDF from images with annotations
 def create_pdf(images_folder, annotations_csv, output_pdf):
-    annotations_data = pd.read_csv(annotations_csv)
+    
     page_size = A2
     c = canvas.Canvas(output_pdf, pagesize=page_size)
     width, height = page_size 
-    image_files = [f for f in os.listdir(images_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    image_files = [f for f in os.listdir(images_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg')) and not f.startswith('.')]
     image_files = sorted(image_files, key=lambda x: int(x.split('_')[1]))
     for image_file in tqdm(image_files):
         image_path = os.path.join(images_folder, image_file)
@@ -33,13 +33,15 @@ def create_pdf(images_folder, annotations_csv, output_pdf):
         c.drawCentredString(width/2, height-45 , 'HPC Number: '+ hpc)
         c.setFont('Times-Roman', size=14)
         c.drawImage(rl_image,45,height-img_height-60 , width= img_width, height = img_height, mask='auto')
-
-        image_annotations = annotations_data[annotations_data['HPC'] == int(hpc)]
-        for i, annotation in image_annotations.iterrows():
-            c.rect(45, height-img_height-120, img_width, 90, fill=0)
-            c.drawString(60, height-img_height-60 , 'Annotation: '+ annotation['Summary'])
-            c.drawString(60, height-img_height-80 , 'Category: '+annotation['category'])
-            c.drawString(60, height-img_height-100 , 'Main Pattern: '+annotation['main_pattern'])
+        
+        if annotations_csv:
+            annotations_data = pd.read_csv(annotations_csv)
+            image_annotations = annotations_data[annotations_data['HPC'] == int(hpc)]
+            for i, annotation in image_annotations.iterrows():
+                c.rect(45, height-img_height-120, img_width, 90, fill=0)
+                c.drawString(60, height-img_height-60 , 'Annotation: '+ annotation['Summary'])
+                c.drawString(60, height-img_height-80 , 'Category: '+annotation['category'])
+                c.drawString(60, height-img_height-100 , 'Main Pattern: '+annotation['main_pattern'])
         c.showPage()
     c.save()
 
@@ -82,17 +84,31 @@ def add_forest_plots_to_pdf(forest_plot_path, output_pdf):
     c.showPage()
     c.save()
 
+# add parser to get fold and resolution and dataset
+import argparse
+parser = argparse.ArgumentParser(description='This script takes the clustering output and generate the data for MIL training by names of methods')
+parser.add_argument('--dataset', type=str, default='Meso_500', help='Dataset name')
+parser.add_argument('--meta_folder', type=str, default='subtype', help='meta data folder')
+parser.add_argument('--fold', type=int, default=0, help='fold number')
+parser.add_argument('--resolution', type=float, default=2.0, help='resolution')
 
 
 if __name__ == "__main__":
-    main_path = "/raid/users/farzaneh/Histomorphological-Phenotype-Learning/"
-    images_folder = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/leiden_2p0_fold0/images/".format(main_path)
-    annotations_csv = "{}files/meso_annotations.csv".format(main_path)
-    output_pdf = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/leiden_2p0_fold0/cluster_report.pdf".format(main_path)
-    cluster_folder = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/".format(main_path)
-    h5_file = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/hdf5_Meso_250_subsampled_he_complete_combined_metadata_filtered.h5".format(main_path)
-    forest_plot_path = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/leiden_2p0_fold0/forest_plot.png".format(main_path)
-    # create_pdf(images_folder, annotations_csv, output_pdf)
+    args = parser.parse_args()
+    dataset = args.dataset
+    meta_folder = args.meta_folder
+    fold = args.fold
+    resolution = args.resolution
+    cluster = 'leiden_{}'.format(resolution).replace('.', 'p')
+    main_path = '/mnt/cephfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning'
+    images_folder = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128_filtered/{}/{}_fold{}/images/".format(main_path, dataset, meta_folder, cluster, fold)
+    annotations_csv = "{}/files/meso_annotations_john.csv".format(main_path)
+    # output_pdf = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/{}/{}_fold{}/clusters_report_{}_fold{}.pdf".format(main_path, dataset, meta_folder, cluster, fold, cluster, fold)
+    output_pdf = images_folder.replace('images/', 'clusters_report_{}_fold{}.pdf'.format(cluster, fold))
+    cluster_folder = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128_filtered/{}/".format(main_path, dataset, meta_folder)
+    # h5_file = "{}/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/{}/hdf5_Meso_250_subsampled_he_complete_combined_metadata_filtered.h5".format(main_path, meta_folder)
+    # forest_plot_path = "{}/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/{}/leiden_2p0_fold0/forest_plot.png".format(main_path, meta_folder)
+    create_pdf(images_folder, annotations_csv, output_pdf)
     # get_hovernet_annotations(cluster_folder, groupby='leiden_2.0', fold=0)
     # add survival information to pdf
     # add_forest_plots_to_pdf(forest_plot_path, output_pdf)

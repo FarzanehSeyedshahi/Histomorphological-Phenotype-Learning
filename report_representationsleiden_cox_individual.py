@@ -9,7 +9,7 @@ from models.clustering.cox_proportional_hazard_regression_leiden_clusters import
 ##### Main #######
 parser = argparse.ArgumentParser(description='Report classification and cluster performance based on Logistic Regression.')
 parser.add_argument('--alpha',               dest='alpha',               type=float,          default=None,        help='Cox regression penalty value.')
-parser.add_argument('--resolution',          dest='resolution',          type=float,          default=1.0,         help='Leiden resolution.')
+parser.add_argument('--resolution',          dest='resolution',          type=float,          default=7.0,         help='Leiden resolution.')
 parser.add_argument('--meta_folder',         dest='meta_folder',         type=str,            default=None,        help='Purpose of the clustering, name of folder.')
 parser.add_argument('--matching_field',      dest='matching_field',      type=str,            default=None,        help='Key used to match folds split and H5 representation file.')
 parser.add_argument('--event_ind_field',     dest='event_ind_field',     type=str,            default=None,        help='Key used to match event indicator field.')

@@ -821,7 +821,6 @@ def real_encode_contrastive_from_checkpoint(model, data, data_out_path, checkpoi
 	hdf5_path = os.path.join(path, name_file)
 	# Check if file is already there.
 	if not os.path.isfile(hdf5_path):
-
 		# H5 File specifications and creation.
 		with h5py.File(real_hdf5, mode='r') as hdf5_file:
 			with h5py.File(hdf5_path, mode='w') as hdf5_file_w:
@@ -910,7 +909,7 @@ def real_encode_contrastive_from_checkpoint(model, data, data_out_path, checkpoi
 		with h5py.File(hdf5_path, mode='r') as hdf5_file:
 			for key in hdf5_file.keys():
 				print('\t Key: %s' % key)
-				num_samples = key_shape.shape[0]
+				num_samples = hdf5_file[key].shape[0]
 				break
 		print('H5 File already created.')
 

@@ -94,11 +94,11 @@ def add_Meso_type_column(h5_path, h5_complete_path, override=True):
 
 if __name__=='__main__':
     
-    main_path = '/raid/users/farzaneh/Histomorphological-Phenotype-Learning'
-    h5_path   = '%s/results/BarlowTwins_3/Meso_400_subsampled/h224_w224_n3_zdim128/hdf5_Meso_400_subsampled_he_complete_filtered.h5' % main_path
-    csv_metadata_path = '%s/files/csv_Meso_400_subsampled_he_complete_filtered_with_survival.csv' % main_path
+    main_path = '/mnt/cephfs/sharedscratch/users/fshahi/Projects/Histomorphological-Phenotype-Learning'
+    h5_path   = '%s/results/BarlowTwins_3/TCGA_MESO/h224_w224_n3_zdim128/hdf5_TCGA_MESO_he_complete.h5' % main_path
+    csv_metadata_path = '%s/files/TCGA_files/csv_TCGA_MESO_he_complete_with_survival.csv' % main_path
     # h5_complete_path = '%s/results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/hdf5_Meso_250_subsampled_he_complete_combined_metadata.h5'%main_path
-    h5_complete_path = '%s/results/BarlowTwins_3/Meso_400_subsampled/h224_w224_n3_zdim128/hdf5_Meso_400_subsampled_he_complete_filtered_combined_metadata.h5'%main_path
+    h5_complete_path = '%s/results/BarlowTwins_3/TCGA_MESO/h224_w224_n3_zdim128/hdf5_TCGA_MESO_he_complete_metadata.h5'%main_path
 
     combine_h5(h5_path, csv_metadata_path, h5_complete_path)
     # add_Meso_type_column(h5_path, h5_complete_path)

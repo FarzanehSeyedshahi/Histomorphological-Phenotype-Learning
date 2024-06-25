@@ -468,7 +468,8 @@ class EffectMeasurePlot_Cox:
         plot.yaxis.set_ticks_position('left')
         plot.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
         plot.get_xaxis().set_minor_formatter(matplotlib.ticker.NullFormatter())
-        plot.set_yticks(ytick, fontsize=fontsize)
+        # plot.set_yticks(ytick, fontsize=fontsize)
+        plot.set_yticks(ytick)
         plot.set_xlim([mini, maxi])
         plot.set_xticks([mini, self.center, maxi])
         plot.set_xticklabels([mini, self.center, maxi])
@@ -522,7 +523,7 @@ def summary_cox_forest_plots(estimators, cis, alpha, alphas, confidence_interval
         if additional_confidence_interval is not None:
             all_data.extend([(a[3], 'Additional') for a in cis])
         all_data = pd.DataFrame(all_data, columns=['C-Index', 'Set'])
-        sns.pointplot(data=all_data, y='C-Index', x='Set', ax=ax_dict[str(6)], linewidth=0.01, dodge=.3, join=False, capsize=.04, markers='s', ci=95)
+        sns.pointplot(data=all_data, y='C-Index', x='Set', ax=ax_dict[str(6)], dodge=.3, join=False, capsize=.04, markers='s', errorbar=('ci', 95))
 
     fig_path = os.path.join(alpha_path, 'hazard_ratios_summary.jpg')
     plt.savefig(fig_path)
@@ -570,6 +571,9 @@ def report_forest_plot_lr(meta_field, frame_clusters, directory, file_name, p_th
         max_tp    = np.round(frame_label['max_tile_sample'].values*100,1).tolist()
         perc_pat  = np.round(frame_label['percent_sample'].values*100,1).tolist()
         max_value = max(abs(max(upper)), abs(min(lower)))
+        import math
+        if math.isnan(max_value):
+            max_value = 10
 
         fontsize = 14
         try:

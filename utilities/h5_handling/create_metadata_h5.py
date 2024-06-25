@@ -28,6 +28,7 @@ def read_meta_data(file_path, matching_field):
 # Get number of samples that overlap with individuals in the meta file.
 def h5_overlap_meta_individuals(h5_file, matching_field, meta_individuals):
     h5_samples = 0
+    print('H5 File: %s' % h5_file)
     with h5py.File(h5_file, 'r') as content:
         h5_individual_prev = ''
         match_flag         = False
@@ -90,6 +91,7 @@ def create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta
             dtype = dt
         storage_dict[meta_field] = content.create_dataset(name=meta_field, shape=[num_tiles], dtype=dtype)
 
+
     index = 0
     print('Iterating through %s ...' % h5_file.split('/')[-1])
     with h5py.File(h5_file, 'r') as orig_content:
@@ -118,8 +120,12 @@ def create_metadata_h5(h5_file, meta_name, list_meta_field, matching_field, meta
                 if key in list_meta_field:
                     # print('storage_dict[key]', storage_dict[key])
                     # print('index', index)
+                    # print('key', key)
                     # print('storage_dict[key][index] shape', np.shape(storage_dict[key][index]))
-                    # print('frame', frame[frame[matching_field].astype(str)==str(h5_individual)][key])
+                    # print('h5_individual', h5_individual)
+                    # print('frame[matching_field].astype(str)', frame[matching_field].astype(str))
+                    # print('matching_field', matching_field)
+                    # print('frame\n', frame[frame[matching_field].astype(str)==str(h5_individual)][key])
                     # print('frame shape', np.shape(frame[frame[matching_field].astype(str)==str(h5_individual)][key]))
                     storage_dict[key][index] = frame[frame[matching_field].astype(str)==str(h5_individual)][key]
                 # Copy all other fiels
@@ -149,7 +155,9 @@ override        = args.override
 # Read meta data file and list of individuals according to the matching_field.
 frame, meta_individuals = read_meta_data(meta_file, matching_field)
 print('Number of individuals in meta file: %s' % len(meta_individuals))
-print('Number of entries in meta file: %s' % len(frame) )
+if matching_field == 'case_Id':
+    frame[matching_field] = frame[matching_field].astype('S23')
+
 
 # Get number of tiles from all individuals in the original H5, <= to the original.
 num_tiles = h5_overlap_meta_individuals(h5_file, matching_field, meta_individuals)

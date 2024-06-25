@@ -17,10 +17,10 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 
 ##### Methods #######
 # Get set paths.
-def representations_h5(main_path, model, dataset, img_size, zdim):
-    hdf5_path_train = '%s/results/%s/%s/h%s_w%s_n3_zdim%s/hdf5_%s_he_train.h5'      % (main_path, model, dataset, img_size, img_size, zdim, dataset)
-    hdf5_path_valid = '%s/results/%s/%s/h%s_w%s_n3_zdim%s/hdf5_%s_he_validation.h5' % (main_path, model, dataset, img_size, img_size, zdim, dataset)
-    hdf5_path_test  = '%s/results/%s/%s/h%s_w%s_n3_zdim%s/hdf5_%s_he_test.h5'       % (main_path, model, dataset, img_size, img_size, zdim, dataset)
+def representations_h5(main_path, model, dataset, img_size, zdim, marker):
+    hdf5_path_train = '%s/results/%s/%s/h%s_w%s_n3_zdim%s/hdf5_%s_%s_train.h5'      % (main_path, model, dataset, img_size, img_size, zdim, dataset, marker)
+    hdf5_path_valid = '%s/results/%s/%s/h%s_w%s_n3_zdim%s/hdf5_%s_%s_validation.h5' % (main_path, model, dataset, img_size, img_size, zdim, dataset, marker)
+    hdf5_path_test  = '%s/results/%s/%s/h%s_w%s_n3_zdim%s/hdf5_%s_%s_test.h5'       % (main_path, model, dataset, img_size, img_size, zdim, dataset, marker)
     return [hdf5_path_train, hdf5_path_valid, hdf5_path_test]
 
 # Get total number of tiles for all sets.
@@ -96,6 +96,7 @@ def create_complete_h5(data, num_tiles, key_dict, override):
 parser = argparse.ArgumentParser(description='Script to combine all H5 representation file into a \'complete\' one.')
 parser.add_argument('--img_size',      dest='img_size',      type=int,            default=224,                    help='Image size for the model.')
 parser.add_argument('--z_dim',         dest='z_dim',         type=int,            default=128,                    help='Dimensionality of projections, default is the Z latent of Self-Supervised.')
+parser.add_argument('--marker',           dest='marker',           type=str,            default='he',                   help='Image marker.')
 parser.add_argument('--dataset',       dest='dataset',       type=str,            default='vgh_nki',              help='Dataset to use.')
 parser.add_argument('--model',         dest='model',         type=str,            default='ContrastivePathology', help='Model name, used to select the type of model (SimCLR, BYOL, SwAV).')
 parser.add_argument('--main_path',     dest='main_path',     type=str,            default=None,                   help='Path for the output run.')
@@ -107,13 +108,14 @@ dataset        = args.dataset
 model          = args.model
 main_path      = args.main_path
 override       = args.override
+marker         = args.marker
 
 if main_path is None:
     main_path = os.path.dirname(os.path.realpath(__file__))
     main_path = '/'.join(main_path.split('/')[:-2])
 
 # Get representations paths.
-data = representations_h5(main_path, model, dataset, img_size, z_dim)
+data = representations_h5(main_path, model, dataset, img_size, z_dim, marker=marker)
 
 # Get total number fo samples.
 num_tiles = get_total_samples(data)

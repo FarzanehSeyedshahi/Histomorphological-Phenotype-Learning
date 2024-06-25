@@ -8,13 +8,16 @@ import os
 
 # Survival Libraries
 from lifelines import CoxPHFitter
-from sksurv.metrics import concordance_index_censored
+from sksurv.metrics import concordance_index_censored, concordance_index_ipcw
 
 # Own libraries.
 from models.clustering.data_processing import *
 from models.evaluation.folds import load_existing_split
 from models.visualization.survival import save_fold_KMs
 from models.visualization.forest_plots import report_forest_plot_cph, summary_cox_forest_plots
+
+main_path = '/mnt/cephfs/sharedscratch/users/fshahi/Projects/Histomorphological-Phenotype-Learning'
+
 
 # Summarize results for the Cox Individual run.
 def summarize_stat_clusters_across_folds(event_ind_field, test_ci, additional_ci, test_pval, additional_pval, alpha, groupby, folds, meta_folder, alpha_path, p_th):
@@ -39,9 +42,14 @@ def summarize_stat_clusters_across_folds(event_ind_field, test_ci, additional_ci
 	# Combine coefficients and standard errors for folds.
 	avgs = list()
 	ses  = list()
+	
 	for i in cox_folds[groupby]:
+		values_coef = cox_coef[cox_coef[groupby]==i]['coef'].values
+		values_se   = cox_coef_se[cox_coef_se[groupby]==i]['se'].values
+		if len(values_coef) != len(counts):
+			counts = counts[:-abs(len(values_coef)-len(counts))]
 		average = np.average(cox_coef[cox_coef[groupby]==i]['coef'].values, weights=counts)
-		std = np.sqrt(np.sum((counts - 1) * (cox_coef_se[cox_coef_se[groupby]==i]['se'].values**2))/(np.sum(counts)-counts.shape[0]))
+		std = np.sqrt(np.sum((counts - 1) * (values_se**2))/(np.sum(counts)-counts.shape[0]))
 		avgs.append(average)
 		ses.append(std)
 	cox_folds['coef'] = avgs
@@ -82,10 +90,7 @@ def mean_confidence_interval(data, confidence=0.95):
 def train_cox(datas, penalizer, l1_ratio, event_ind_field='event_ind', event_data_field='event_data', robust=True, frame_clusters=None, groupby=None):
 	# Train Cox Proportional Hazard.
 	train, set_name = datas[0]
-	#drop nans
-	print('train shape before dropna: ', train.shape)
 	train = train.dropna(axis=0, how='any')
-	print('train shape after dropna: ', train.shape)
 
 	cph = CoxPHFitter(penalizer=penalizer, l1_ratio=l1_ratio)
 	cph.fit(train, duration_col=event_data_field, event_col=event_ind_field, show_progress=False, robust=robust)
@@ -101,10 +106,27 @@ def train_cox(datas, penalizer, l1_ratio, event_ind_field='event_ind', event_dat
 
 	summary_table = cph.summary
 	if frame_clusters is not None:
+		l1 = frame_clusters[groupby].astype(str).to_list()
 		frame_clusters = frame_clusters.sort_values(by=groupby)
+		
 		for column in ['coef', 'coef lower 95%', 'coef upper 95%', 'p']:
 			for cluster_id in [col for col in train if col not in [event_ind_field, event_data_field]]:
-				frame_clusters.loc[frame_clusters[groupby]==cluster_id, column] = summary_table.loc[cluster_id, column].astype(np.float32)
+				# be sure that all cluster_id are in the frame_clusters if not add them
+				if cluster_id not in l1:
+					# add a new row to frame_clusters
+					df_temp_columns = frame_clusters.columns.to_list()
+					df_temp_data = [cluster_id] + [np.nan]*(len(df_temp_columns)-1)
+					df_temp = pd.DataFrame([df_temp_data], columns=df_temp_columns)
+					frame_clusters = pd.concat([frame_clusters, df_temp], axis=0)
+					print(frame_clusters)
+					l1.append(cluster_id)
+				frame_clusters.loc[frame_clusters[groupby].astype(str)==cluster_id, column] = summary_table.loc[cluster_id, column].astype(np.float32)
+				# except:
+				# 	# append new clusters
+				# 	df_temp = pd.DataFrame([[cluster_id, np.nan, np.nan, np.nan, np.nan]], columns=['leiden_0.2', 'coef', 'coef lower 95%', 'coef upper 95%', 'p'])
+				# 	frame_clusters = pd.concat([frame_clusters, df_temp], axis=0)
+				# 	frame_clusters.loc[frame_clusters[groupby]==cluster_id, column] = summary_table.loc[cluster_id, column].astype(np.float32)
+
 		frame_clusters = frame_clusters.sort_values(by='coef')
 
 	return cph, predictions, frame_clusters
@@ -132,6 +154,7 @@ def evalutaion_survival(datas, predictions, event_ind_field='event_ind', event_d
 				print('Data set:', set_named, 'Prediction set:', set_namep)
 				exit()
 		else:
+			print('No data for set:', set_named)
 			c_index   = None
 			set_namep = data_i[1]
 		cis.append((c_index, set_namep))
@@ -162,12 +185,17 @@ def get_high_low_risks(predictions, datas, fold, matching_field, q_buckets=2):
 
 # Combine Risk Groups over the folds. In the case of additional dataset, mayority vote over folds.
 def combine_risk_groups(risk_groups, additional_risk, high_lows, fold, num_folds, matching_field, event_ind_field='event_ind', event_data_field='event_data'):
-	risk_groups[1] = risk_groups[1].append(high_lows[2][1], ignore_index=True)
-	risk_groups[0] = risk_groups[0].append(high_lows[2][0], ignore_index=True)
+	# risk_groups[1] = risk_groups[1].append(high_lows[2][1], ignore_index=True)
+	# risk_groups[0] = risk_groups[0].append(high_lows[2][0], ignore_index=True)
+	# concat instead of append | Deprecated
+	risk_groups[1] = pd.concat([risk_groups[1], high_lows[2][1]], ignore_index=True)
+	risk_groups[0] = pd.concat([risk_groups[0], high_lows[2][0]], ignore_index=True)
 
 	if high_lows[3][2] is not None:
 		if fold == 0:
-			additional_risk = additional_risk.append(high_lows[3][2][[matching_field, event_data_field, event_ind_field]], ignore_index=True)
+			# additional_risk = additional_risk.append(high_lows[3][2][[matching_field, event_data_field, event_ind_field]], ignore_index=True)
+			# concat instead of append | Deprecated
+			additional_risk = pd.concat([additional_risk, high_lows[3][2][[matching_field, event_data_field, event_ind_field]]], ignore_index=True)
 		additional_risk['h_bin_%s'%fold] = high_lows[3][2]['h_bin_%s'%fold].values
 
 		if fold == num_folds-1:
@@ -362,15 +390,65 @@ def run_cph_regression_individual(orig_alpha, resolution, meta_folder, matching_
 	estimators      = list()
 	for i, fold in enumerate(folds):
 		# Read CSV files for train, validation, test, and additional sets.
-		dataframes, complete_df, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold, force_fold)
+		# TODO: hard code on mathcing field as samples
+		dataframes, complete_df, leiden_clusters = read_csvs(adatas_path, 'samples', groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold, force_fold)
 
 		# Check clusters and diversity within.
-		frame_clusters, frame_samples = create_frames(complete_df, groupby, event_ind_field, diversity_key=matching_field, reduction=2)
+		# frame_clusters, frame_samples = create_frames(complete_df, groupby, event_ind_field, diversity_key=matching_field, reduction=2)
 
+		dataset = h5_complete_path.split('/hdf5_')[-1].split('_he')[0]
+		
+		
+		csvs_path = adatas_path.split('adatas')[0]
+		frame_clusters = pd.read_csv(os.path.join(csvs_path, 'survival_csvs','HPC_frames','{}_{}_{}_fold{}_hpc_purity.csv'.format(dataset, type_composition, groupby.replace('.', 'p'), i)), index_col=0)
+		# print(frame_clusters)
+
+		type_composition = 'clr' #TODO: modify this
+		data = list()
+		datas_all = list()
+		# data_res_folds[resolution][i] = {'data':[], 'features':None}
+		for name in ['train', 'test', 'valid', 'additional']:
+			df = pd.read_csv(os.path.join(csvs_path, 'survival_csvs','{}_{}_fold{}_{}.csv'.format(type_composition, groupby.replace('.', 'p'), i, name)), index_col=0)
+			
+			# metadata_flag = False
+			# if metadata_flag:
+			# 	if name in ['train', 'test', 'valid']:
+			# 		patient_csv = pd.read_csv('{}/files/Meso_patients.csv'.format(main_path))
+			# 		# patient_csv = patient_csv[['age_at_surgery', 'gender', 'recurrnce',	'time_to_recurrence','stage', 'case_Id']]
+			# 		patient_csv = patient_csv[['age_at_surgery', 'gender','stage', 'case_number']]
+			# 		patient_csv.rename(columns={'age_at_surgery':'age'}, inplace=True)
+			# 		df['case_number'] = df[matching_field].apply(lambda x: x.split('_')[1]).astype('int64')
+			# 		df = df.merge(patient_csv, on='case_number', how='left')
+			# 		df = df.drop('case_number', axis=1)
+			# 		df['stage'] = df['stage'].replace({'N0':0.0, 'Not given (Nx)':-1.0, 'N1':1.0, 'N2':2.0})
+			# 		df['gender'] = df['gender'].replace({'Male':0, 'Female':1})
+					
+			# 		# normalize added metadata
+			# 		df['age'] = (df['age'] - df['age'].mean()) / df['age'].std()
+			# 		df['stage'] = (df['stage'] - df['stage'].mean()) / df['stage'].std()
+
+			# 	if name == 'additional':
+			# 		patient_csv = pd.read_csv('{}/files/TCGA_files/clinical_TCGA_clean.csv'.format(main_path))
+			# 		patient_csv = patient_csv[['age_at_index','gender','stage','samples']]
+			# 		patient_csv.rename(columns={'age_at_index':'age'}, inplace=True)
+			# 		df = df.merge(patient_csv, on='samples', how='left')
+			# 		df['stage'] = df['stage'].replace({'N0':0.0, 'NX':-1.0, 'N1':1.0, 'N2':2.0, 'N3':3.0})
+			# 		df['gender'] = df['gender'].replace({'male':0, 'female':1})
+
+			# 		# normalize added metadata
+			# 		df['age'] = (df['age'] - df['age'].mean()) / df['age'].std()
+			# 		df['stage'] = (df['stage'] - df['stage'].mean()) / df['stage'].std()
+			df.dropna(axis=0, how='any', inplace=True)
+			data.append((df.drop('case_Id', axis=1), name))
+			
+			datas_all.append((df, name))
+			if name == 'train':
+				zero_dim_col_index = df.columns.tolist().index('0')
+				features = df.columns.tolist()[zero_dim_col_index:]
 		# Prepare data for COX.
-		data, datas_all, features = prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition, max_months, matching_field, event_ind_field, event_data_field, min_tiles,
-														  use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat, remove_clusters=remove_clusters)
-
+		# data, datas_all, features = prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition, max_months, matching_field, event_ind_field, event_data_field, min_tiles,
+														#   use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat, remove_clusters=remove_clusters)
+		
 		# COX Regression
 		estimator, predictions, frame_clusters = train_cox(data, penalizer=alpha[i], l1_ratio=l1_ratio, robust=True, event_ind_field=event_ind_field, event_data_field=event_data_field,
 														   frame_clusters=frame_clusters, groupby=groupby)
@@ -387,7 +465,6 @@ def run_cph_regression_individual(orig_alpha, resolution, meta_folder, matching_
 		# High, low risk groups.
 		high_lows = get_high_low_risks(predictions, datas_all, i, matching_field, q_buckets=q_buckets)
 		risk_groups, additional_risk = combine_risk_groups(risk_groups, additional_risk, high_lows, i, num_folds, matching_field, event_ind_field, event_data_field)
-
 		print('\t\tFold', i, 'Alpha', np.round(alpha[i],2), 'Train/Valid/Test/Additional C-Index:', '/'.join([str(i) for i in cis_folds[i]]))
 
 	print()
@@ -442,19 +519,49 @@ def run_cph_regression(alphas, resolutions, meta_folder, matching_field, folds, 
 		groupby = 'leiden_%s' % resolution
 		print('\tResolution', groupby)
 		data_res_folds[resolution] = dict()
-		for i, fold in enumerate(folds):
-			# if i == 0:
-				# Read CSV files for train, validation, test, and additional sets.
-				dataframes, _, leiden_clusters = read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h5_additional_path, additional_as_fold, force_fold)
-				# Prepare data for COX.
-				data, datas_all, features = prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition, max_months, matching_field, event_ind_field, event_data_field, min_tiles,
-																use_conn=use_conn, use_ratio=use_ratio, top_variance_feat=top_variance_feat, remove_clusters=remove_clusters)
+		for i in range(5):			
+				# parent of main_cluster_path
+				csvs_path = adatas_path.split('adatas')[0]
+				# metadata_flag = False
+				type_composition = 'clr' #TODO: modify this
+				data_res_folds[resolution][i] = {'data':[], 'features':None}
+				for name in ['train', 'test', 'valid', 'additional']:
+					df = pd.read_csv(os.path.join(csvs_path, 'survival_csvs','{}_{}_fold{}_{}.csv'.format(type_composition, groupby.replace('.', 'p'), i, name)), index_col=0)
+					# if metadata_flag:
+					# 	if name in ['train', 'test', 'valid']:
+					# 		patient_csv = pd.read_csv('{}/files/Meso_patients.csv'.format(main_path))
+					# 		# patient_csv = patient_csv[['age_at_surgery', 'gender', 'recurrnce',	'time_to_recurrence','stage', 'case_Id']]
+					# 		patient_csv = patient_csv[['age_at_surgery', 'gender','stage', 'case_Id']]
+					# 		patient_csv.rename(columns={'age_at_surgery':'age'}, inplace=True)
+					# 		df['case_Id'] = df[matching_field].apply(lambda x: x.split('_')[1]).astype('int64')
+					# 		df = df.merge(patient_csv, on='case_Id', how='left')
+					# 		df = df.drop('case_Id', axis=1)
+					# 		df['stage'] = df['stage'].replace({'N0':0.0, 'Not given (Nx)':-1.0, 'N1':1.0, 'N2':2.0})
+					# 		df['gender'] = df['gender'].replace({'Male':0, 'Female':1})
+							
+					# 		# normalize added metadata
+					# 		df['age'] = (df['age'] - df['age'].mean()) / df['age'].std()
+					# 		df['stage'] = (df['stage'] - df['stage'].mean()) / df['stage'].std()
 
-				# Store representations.
-				data_res_folds[resolution][i] = {'data':data, 'features':features}
+					# 	if name == 'additional':
+					# 		patient_csv = pd.read_csv('{}/files/TCGA_files/clinical_TCGA_clean.csv'.format(main_path))
+					# 		patient_csv = patient_csv[['age_at_index','gender','stage','samples']]
+					# 		patient_csv.rename(columns={'age_at_index':'age'}, inplace=True)
+					# 		df = df.merge(patient_csv, on='samples', how='left')
+					# 		df['stage'] = df['stage'].replace({'N0':0.0, 'NX':-1.0, 'N1':1.0, 'N2':2.0, 'N3':3.0})
+					# 		df['gender'] = df['gender'].replace({'male':0, 'female':1})
 
-				# Information
-				print('\t\tFold', i, 'Features:', len(features), 'Clusters:', len(leiden_clusters))
+					# 		# normalize added metadata
+					# 		df['age'] = (df['age'] - df['age'].mean()) / df['age'].std()
+					# 		df['stage'] = (df['stage'] - df['stage'].mean()) / df['stage'].std()
+
+					df = df.drop('case_Id', axis=1)
+					df.dropna(axis=0, how='any', inplace=True)
+					data_res_folds[resolution][i]['data'].append((df, name))
+					if name == 'train':
+						zero_dim_col_index = df.columns.tolist().index('0')
+						data_res_folds[resolution][i]['features'] = df.columns.tolist()[zero_dim_col_index:]
+
 
 	# Run Cox Proportional Hazard regression.
 	for l1_ratio in l1_ratios:
@@ -467,19 +574,15 @@ def run_cph_regression(alphas, resolutions, meta_folder, matching_field, folds, 
 			for alpha in alphas:
 				print('\t\tResolution', resolution, 'Alpha', alpha)
 				for i, fold in enumerate(folds):
-					# if i == 0:
+					data     = data_res_folds[resolution][i]['data']
+					features = data_res_folds[resolution][i]['features']
+					if alpha == 0.0:
+						alpha = 0.0000001
+					estimator, predictions, _ = train_cox(data, penalizer=alpha, l1_ratio=l1_ratio, robust=True, event_ind_field=event_ind_field, event_data_field=event_data_field)
 
-						# Load data.
-						data     = data_res_folds[resolution][i]['data']
-						features = data_res_folds[resolution][i]['features']
-						
+					# Evaluation metrics.
+					cis = evalutaion_survival(data, predictions, event_ind_field=event_ind_field, event_data_field=event_data_field)
+					print('\t\t\tFold %s %-3s features C-Index:' % (i, len(features)), cis)
 
-						# COX Regression
-						estimator, predictions, _ = train_cox(data, penalizer=alpha, l1_ratio=l1_ratio, robust=True, event_ind_field=event_ind_field, event_data_field=event_data_field)
-
-						# Evaluation metrics.
-						cis = evalutaion_survival(data, predictions, event_ind_field=event_ind_field, event_data_field=event_data_field)
-						print('\t\t\tFold %s %-3s features C-Index:' % (i, len(features)), cis)
-
-						# Keep track of performance.
-						cox_data = keep_track_data(resolution, alpha, i, cis, cox_data, l1_ratio, min_tiles, meta_folder, main_cluster_path)
+					# Keep track of performance.
+					cox_data = keep_track_data(resolution, alpha, i, cis, cox_data, l1_ratio, min_tiles, meta_folder, main_cluster_path)

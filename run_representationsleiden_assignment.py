@@ -36,7 +36,7 @@ if main_path is None:
 
 # Default resolutions.
 if resolution is None:
-    resolutions = [0.4, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    resolutions = [2.0, 0.4, 0.7, 1.0, 1.5, 2.5, 3.0, 4.0, 5.0, 7.0, 9.0]
     # resolutions.extend([6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0])
 else:
     resolutions = [resolution]
