@@ -1,0 +1,8 @@
+{
+ "mil": {
+  "slides": "/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/mil/slides",
+  "roi": "/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/mil/slides/rois",
+  "tiles": "/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/mil/tiles",
+  "tfrecords": "/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/mil/tfrecords"
+ }
+}

@@ -33,18 +33,10 @@ cluster_14/
 cluster_29/
 cluster_3/
 cluster_31/
-cluster_images.sh
-combine_h5.sh
 data/
 deleted/
-down_data_prep.sh
 figures/
-filtering.sh
-leiden_clustering.sh
-leiden_clustering_assig.sh
-leiden_clustering_assignation_old.sh
-metadata.sh
-mil/
+
 pkl_Meso.pkl
 projection.sh
 rapid.yml
@@ -54,27 +46,4 @@ scanpy.yml
 slideflow.log
 test.ipynb
 test.txt
-test_code.sh
-test_leiden.py
-test_sample.py
-train.sh
 utilities/tile_cleaning/additional_dataset_review.ipynb
-
-
-
-# models/clustering/data_processing.py
-# models/clustering/leiden_representations.py
-# models/clustering/logistic_regression_leiden_clusters.py
-# models/evaluation/features.py
-# models/visualization/clusters.py
-# utilities/fold_creation/class_folds.ipynb
-# utilities/fold_creation/fold_cross_validation.py
-# utilities/h5_handling/combine_complete_h5_meso.py
-# utilities/h5_handling/create_metadata_h5.py
-# utilities/tile_cleaning/review_cluster_create_pickles_meso.ipynb
-# utilities/tile_cleaning/review_cluster_external_dataset.ipynb
-# utilities/visualizations/.ipynb_checkpoints/cluster_correlations-checkpoint.ipynb
-# utilities/visualizations/SHAP_interpretation.ipynb
-# utilities/visualizations/cluster_correlations.ipynb
-# utilities/visualizations/cluster_correlations_figures.ipynb
-# utilities/visualizations/visualizations_multicancer.ipynb
