@@ -24,7 +24,7 @@ Meso_TMA
 utilities/visualizations/.ipynb_checkpoints
 MesoGraph/
 SpindleMesoNet/
-
+mil/datasets/*
 
 MesoGraph/
 SpindleMesoNet/
