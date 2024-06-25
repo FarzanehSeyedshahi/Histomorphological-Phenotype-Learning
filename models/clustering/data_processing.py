@@ -109,9 +109,12 @@ def read_csvs(adatas_path, matching_field, groupby, i, fold, h5_complete_path, h
 	else:
 		# Train, valid, and test set.
 		adata_name   = h5_complete_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
+		print('Adata name:', adata_name)
 		train_csv    = os.path.join(adatas_path, '%s_train.csv' % adata_name)
 		if not os.path.isfile(train_csv):
+			print('Train csv not found:', train_csv)
 			train_csv    = os.path.join(adatas_path, '%s.csv' % adata_name)
+		print('Train csv:', train_csv)
 		valid_csv    = os.path.join(adatas_path, '%s_valid.csv' % adata_name)
 		test_csv     = os.path.join(adatas_path, '%s_test.csv' % adata_name)
 
@@ -773,6 +776,10 @@ def prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition
 						  use_conn=True, use_ratio=False, top_variance_feat=100, remove_clusters=None):
 	# Dataframes.
 	train_df, valid_df, test_df, additional_df = dataframes
+	print('train df info:', train_df.shape)
+	print('valid df info:', valid_df.shape)
+	print('test df info:', test_df.shape)
+	print('additional df info:', additional_df.shape)
 
 	# Clip based on maximum # of months.
 	if event_data_field is not None:
@@ -799,6 +806,7 @@ def prepare_data_survival(dataframes, groupby, leiden_clusters, type_composition
 		additional_slides_df, _, _  = prepare_set_survival(additional_df, matching_field, groupby, leiden_clusters, type_composition, event_ind_field, event_data_field, min_tiles=min_tiles,
 														   use_conn=use_conn, own_corr=True, use_ratio=use_ratio, top_variance_feat=top_variance_feat, keep_features=keep_features)
 
+	print('additional_slides_df info after set survival:', train_slides_df.shape)
 	# TODO - Experimental remove 'background' clusters towards a slide.
 	if remove_clusters is not None:
 		features = [cluster_id for cluster_id in features if cluster_id not in remove_clusters]

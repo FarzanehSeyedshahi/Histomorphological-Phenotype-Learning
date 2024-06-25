@@ -17,12 +17,17 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 parser = argparse.ArgumentParser(description='Run Leiden Community detection over Self-Supervised representations.')
 parser.add_argument('--resolution',          dest='resolution',          type=float,   default=None,        help='Leiden resolution.')
 parser.add_argument('--meta_field',           dest='meta_field',           type=str,  default=None,        help='Purpose of the clustering, name of folder.')
+parser = argparse.ArgumentParser(description='Run Leiden Community detection over Self-Supervised representations.')
+parser.add_argument('--resolution',          dest='resolution',          type=float,   default=None,        help='Leiden resolution.')
+parser.add_argument('--meta_field',           dest='meta_field',           type=str,  default=None,        help='Purpose of the clustering, name of folder.')
 parser.add_argument('--rep_key',             dest='rep_key',             type=str,  default='z_latent',  help='Key pattern for representations to grab: z_latent, h_latent.')
 parser.add_argument('--folds_pickle',        dest='folds_pickle',        type=str,  default=None,        help='Pickle file with folds information.')
 parser.add_argument('--main_path',           dest='main_path',           type=str,  default=None,        help='Workspace main path.')
 parser.add_argument('--h5_complete_path',    dest='h5_complete_path',    type=str,  required=True,       help='H5 file path to run the leiden clustering folds.')
 parser.add_argument('--h5_additional_path',  dest='h5_additional_path',  type=str,  required=True,       help='Additional H5 representation to assign leiden clusters.')
 args               = parser.parse_args()
+resolution         = args.resolution
+meta_field          = args.meta_field
 resolution         = args.resolution
 meta_field          = args.meta_field
 rep_key            = args.rep_key

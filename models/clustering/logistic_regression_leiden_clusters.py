@@ -91,6 +91,7 @@ def summarize_relevant_clusters(alphas, resolutions, meta_folder, folds_pickle, 
 	for resolution in resolutions:
 		groupby = 'leiden_%s' % resolution
 		for i, fold in enumerate(folds):
+
 			list_clusters = list()
 			for alpha in alphas:
 				alpha_path        = os.path.join(main_cluster_path, 'alpha_%s_mintiles_%s' % (str(alpha).replace('.', 'p'), min_tiles))
@@ -154,7 +155,9 @@ def box_plot_auc_results(frame, columns, path_file, ylim=None):
 	sns.set_theme(style='darkgrid')
 	mosaic = '''A'''
 	fig = plt.figure(figsize=(20,7), constrained_layout=True)
-	ax_dict = fig.subplot_mosaic(mosaic, sharex=True, sharey=True)
+	# Del sharex and sharey to fix bug in seaborn.
+	# ax_dict = fig.subplot_mosaic(mosaic, sharex=True, sharey=True)
+	ax_dict = fig.subplot_mosaic(mosaic)
 	box_plot_frame(frame, columns, ax=ax_dict['A'], ylim=ylim)
 	plt.savefig(path_file.replace('.csv', '.jpg'))
 	plt.close(fig)
@@ -167,7 +170,7 @@ def alpha_box_plot_auc_results(alphas, meta_folder, meta_field, min_tiles, h5_co
 				23B
 				45C'''
 	fig = plt.figure(figsize=(42,24), constrained_layout=True)
-	ax_dict = fig.subplot_mosaic(mosaic, sharex=False, sharey=False)
+	ax_dict = fig.subplot_mosaic(mosaic)
 
 	main_cluster_path = h5_complete_path.split('hdf5_')[0]
 	main_cluster_path = os.path.join(main_cluster_path, meta_folder)
@@ -239,6 +242,7 @@ def run_circular_plots(resolutions, folder_meta_field, meta_field, matching_fiel
 	for resolution in resolutions:
 		groupby     = 'leiden_%s' % resolution
 		for i, fold in enumerate(folds):
+
 			# Get sets.
 			train_samples, valid_samples, test_samples = fold
 
@@ -269,6 +273,7 @@ def run_circular_plots(resolutions, folder_meta_field, meta_field, matching_fiel
 
 			# Read CSV files for train, validation, test, and additional sets.
 			if h5_additional_path is not None:
+				print('Additional path:', h5_additional_path)
 				adata_name  = h5_additional_path.split('/hdf5_')[1].split('.h5')[0] + '_%s__fold%s' % (groupby.replace('.', 'p'), i)
 
 				csv_path = os.path.join(adatas_path,   '%s.csv' % adata_name)
@@ -277,6 +282,9 @@ def run_circular_plots(resolutions, folder_meta_field, meta_field, matching_fiel
 					additional_df = pd.read_csv(csv_path)
 					frame_clusters, frame_samples = create_frames(additional_df, groupby, meta_field, diversity_key=matching_field, reduction=2)
 					cluster_circular(frame_clusters, groupby, meta_field, jpg_path)
+
+
+
 
 ''' ############## Logistic Regression ############## '''
 # Get AUC performance.
@@ -532,10 +540,12 @@ def run_logistic_regression(alphas, resolutions, meta_folder, meta_field, matchi
 
 				# Keep track of data.
 				all_data.append([groupby, i] + aucs)
-				frame_clusters.to_csv(os.path.join(alpha_path, '%s_fold%s_clusters.csv' % (str(groupby).replace('.', 'p'), i)), index=False)
+				file_name_csv = '%s_fold%s_clusters.csv' % (str(groupby).replace('.', 'p'), i)
+
+				frame_clusters.to_csv(os.path.join(alpha_path, file_name_csv), index=False)
 
 				# Report forest plots and confusion matrices for logistic regression.
-				report_forest_plot_lr(meta_field, frame_clusters, directory=alpha_path, file_name='%s_fold%s_clusters.csv' % (str(groupby).replace('.', 'p'), i))
+				report_forest_plot_lr(meta_field, frame_clusters, directory=alpha_path, file_name=file_name_csv)
 			# plot_confusion_matrix_lr(cms, directory=alpha_path, file_name='%s_fold%s_cm.jpg' % (str(groupby).replace('.', 'p'), i))
 
 			if force_fold is not None:

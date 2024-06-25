@@ -580,9 +580,9 @@ def run_cph_regression(alphas, resolutions, meta_folder, matching_field, folds, 
 						alpha = 0.0000001
 					estimator, predictions, _ = train_cox(data, penalizer=alpha, l1_ratio=l1_ratio, robust=True, event_ind_field=event_ind_field, event_data_field=event_data_field)
 
-					# Evaluation metrics.
-					cis = evalutaion_survival(data, predictions, event_ind_field=event_ind_field, event_data_field=event_data_field)
-					print('\t\t\tFold %s %-3s features C-Index:' % (i, len(features)), cis)
+						# Evaluation metrics.
+						cis = evalutaion_survival(data, predictions, event_ind_field=event_ind_field, event_data_field=event_data_field)
+						print('\t\t\tFold %s %-3s features C-Index:' % (i, len(features)), cis)
 
-					# Keep track of performance.
-					cox_data = keep_track_data(resolution, alpha, i, cis, cox_data, l1_ratio, min_tiles, meta_folder, main_cluster_path)
+						# Keep track of performance.
+						cox_data = keep_track_data(resolution, alpha, i, cis, cox_data, l1_ratio, min_tiles, meta_folder, main_cluster_path)

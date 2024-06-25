@@ -16,8 +16,11 @@ os.environ['HDF5_USE_FILE_LOCKING'] = 'FALSE'
 ##### Main #######
 parser = argparse.ArgumentParser(description='Run Leiden Community detection over Self-Supervised representations.')
 parser.add_argument('--resolution',          dest='resolution',          type=float,   default=None,        help='Leiden resolution.')
+parser.add_argument('--resolution',          dest='resolution',          type=float,   default=None,        help='Leiden resolution.')
 parser.add_argument('--subsample',           dest='subsample',           type=int,    default=None,        help='Number of sample to run Leiden on, default is None, 200000 works well.')
 parser.add_argument('--n_neighbors',         dest='n_neighbors',         type=int,    default=250,         help='Number of neighbors to use when creating the graph, default is 250.')
+parser.add_argument('--meta_field',           dest='meta_field',           type=str,    default=None,        help='Purpose of the clustering, name of folder.')
+parser.add_argument('--matching_field',       dest='matching_field',       type=str,    default=None,        help='Key used to match folds split and H5 representation file.')
 parser.add_argument('--meta_field',           dest='meta_field',           type=str,    default=None,        help='Purpose of the clustering, name of folder.')
 parser.add_argument('--matching_field',       dest='matching_field',       type=str,    default=None,        help='Key used to match folds split and H5 representation file.')
 parser.add_argument('--rep_key',             dest='rep_key',             type=str,    default='z_latent',  help='Key pattern for representations to grab: z_latent, h_latent.')
@@ -29,6 +32,8 @@ args               = parser.parse_args()
 subsample          = args.subsample
 resolution         = args.resolution
 n_neighbors        = args.n_neighbors
+meta_field          = args.meta_field
+matching_field      = args.matching_field
 meta_field          = args.meta_field
 matching_field      = args.matching_field
 rep_key            = args.rep_key
