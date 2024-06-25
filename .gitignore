@@ -59,15 +59,7 @@ test_leiden.py
 test_sample.py
 train.sh
 utilities/tile_cleaning/additional_dataset_review.ipynb
-workflow/attention.py
-workflow/down_data_prep_additional.py
-workflow/hpc_figures.ipynb
-workflow/subtype_classification_ml.py
-workflow/subtype_data_preparation.py
-workflow/subtype_figures.ipynb
-workflow/survival_data_preparation.py
-workflow/survival_figures.ipynb
-workflow/test.py
+
 
 
 # models/clustering/data_processing.py
