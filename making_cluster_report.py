@@ -38,7 +38,7 @@ def create_pdf(images_folder, annotations_csv, output_pdf):
         for i, annotation in image_annotations.iterrows():
             c.rect(45, height-img_height-120, img_width, 90, fill=0)
             c.drawString(60, height-img_height-60 , 'Annotation: '+ annotation['Summary'])
-            c.drawString(60, height-img_height-80 , 'Category: '+annotation['category'])
+            # c.drawString(60, height-img_height-80 , 'Category: '+annotation['category'])
             c.drawString(60, height-img_height-100 , 'Main Pattern: '+annotation['main_pattern'])
         c.showPage()
     c.save()
@@ -85,14 +85,22 @@ def add_forest_plots_to_pdf(forest_plot_path, output_pdf):
 
 
 if __name__ == "__main__":
-    main_path = "/raid/users/farzaneh/Histomorphological-Phenotype-Learning/"
-    images_folder = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/leiden_2p0_fold0/images/".format(main_path)
-    annotations_csv = "{}files/meso_annotations.csv".format(main_path)
-    output_pdf = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/leiden_2p0_fold0/cluster_report.pdf".format(main_path)
-    cluster_folder = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/".format(main_path)
-    h5_file = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/hdf5_Meso_250_subsampled_he_complete_combined_metadata_filtered.h5".format(main_path)
-    forest_plot_path = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/leiden_2p0_fold0/forest_plot.png".format(main_path)
-    # create_pdf(images_folder, annotations_csv, output_pdf)
+    main_path = '/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/'
+
+    resolution = '2p0'
+    meta_folder = '750K'
+    fold = 4
+    dataset = 'Meso'
+    'results/BarlowTwins_3/Meso/h224_w224_n3_zdim128/750K/leiden_2p0_fold4/'
+
+
+    images_folder = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/{}/leiden_{}_fold{}/images/".format(main_path, dataset, meta_folder, resolution, fold)
+    annotations_csv = "{}/files/meso_annotations_{}.csv".format(main_path, meta_folder)
+    output_pdf = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/{}/leiden_{}_fold{}/cluster_report.pdf".format(main_path, dataset, meta_folder, resolution, fold)
+    cluster_folder = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/{}/".format(main_path, dataset, meta_folder)
+    # h5_file = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/{}/hdf5_{}_he_complete_metadata_filtered.h5".format(main_path, dataset, meta_folder, dataset)
+    # forest_plot_path = "{}results/BarlowTwins_3/Meso_250_subsampled/h224_w224_n3_zdim128/meso_nn250/leiden_2p0_fold0/forest_plot.png".format(main_path)
+    create_pdf(images_folder, annotations_csv, output_pdf)
     # get_hovernet_annotations(cluster_folder, groupby='leiden_2.0', fold=0)
     # add survival information to pdf
     # add_forest_plots_to_pdf(forest_plot_path, output_pdf)
