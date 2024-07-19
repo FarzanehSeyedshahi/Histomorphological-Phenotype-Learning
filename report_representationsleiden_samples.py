@@ -111,7 +111,6 @@ if tile_img:
 # Save WSI overlay with clusters.
 plot_wsi_clusters(groupby, meta_folder, matching_field, meta_field, data, fold, h5_complete_path, h5_additional_path, additional_as_fold, dpi, min_tiles, manifest_csv=manifest_csv,
                   value_cluster_ids=value_cluster_ids, type_='percent', only_id=only_id, n_wsi_samples=3)
-                  value_cluster_ids=value_cluster_ids, type_='percent', only_id=only_id, n_wsi_samples=3)
 
 # Save WSI overlay with clusters.
 # plot_wsi_clusters_interactions(groupby, meta_folder, 'slides', meta_field, data, fold, h5_complete_path, h5_additional_path, additional_as_fold, dpi, min_tiles, manifest_csv=manifest_csv,
