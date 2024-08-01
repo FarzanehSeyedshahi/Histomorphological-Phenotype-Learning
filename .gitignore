@@ -47,3 +47,5 @@ slideflow.log
 test.ipynb
 test.txt
 utilities/tile_cleaning/additional_dataset_review.ipynb
+
+slurm_logs/*
