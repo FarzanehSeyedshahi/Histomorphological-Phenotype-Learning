@@ -12,10 +12,10 @@ warnings.filterwarnings("ignore")
 def get_color_dict():
     color_dict = {
         "0" : ["nolabe", [0  ,   0,   0]], 
-        "1" : ["neopla", [255,   0,   0]], 
-        "2" : ["inflam", [0  , 255,   0]], 
-        "3" : ["connec", [0  ,   0, 255]], 
-        "4" : ["necros", [255, 255,   0]], 
+        "1" : ["neoplastic", [255,   0,   0]], 
+        "2" : ["inflammation", [0  , 255,   0]], 
+        "3" : ["connective", [0  ,   0, 255]], 
+        "4" : ["necrosis", [255, 255,   0]], 
         "5" : ["no-neo", [255, 165,   0]] 
     }
     return color_dict
@@ -73,8 +73,9 @@ def csv_from_json():
                             row[nuc_type_key] = row[nuc_type_key] + 1
                     except:
                         pass
+
             nuc_types_df = pd.concat([nuc_types_df, row], axis=0)
-    nuc_types_df.to_csv('/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types.csv', index=False)
+        nuc_types_df.to_csv('/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types.csv', index=False, mode='a', header=False)
     return nuc_types_df
 
 # def main():
