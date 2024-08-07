@@ -55,27 +55,31 @@ def csv_from_json():
     filenames_5x = os.listdir(path_folder)
 
     nuc_types_df = pd.DataFrame(columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
+    
     for filename in filenames_5x:
-        tiles = os.listdir(path_folder + filename + '/5.0/')
-        for tile in tiles:
-            start_i_5x, start_j_5x = tile.split('.jpeg')[0].split('_')
-            start_i, start_j = int(start_j_5x)*4, int(start_i_5x)*4
-            row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]], columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
-            for i in range(start_i, start_i+4):
-                for j in range(start_j, start_j+4):
-                    try:
-                        path = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/hovernet/{}/20.0/json/{}_{}.json'.format(filename,i,j)
-                        json_file = open(path)
-                        data = json.load(json_file)
-                        for i_nuc in data['nuc']:
-                            type_index = str(data['nuc'][i_nuc]['type'])
-                            nuc_type_key = color_dict[type_index][0]
-                            row[nuc_type_key] = row[nuc_type_key] + 1
-                    except:
-                        pass
+        try:
+            tiles = os.listdir(path_folder + filename + '/5.0/')
+            for tile in tiles:
+                start_i_5x, start_j_5x = tile.split('.jpeg')[0].split('_')
+                start_i, start_j = int(start_j_5x)*4, int(start_i_5x)*4
+                row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]], columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
+                for i in range(start_i, start_i+4):
+                    for j in range(start_j, start_j+4):
+                        try:
+                            path = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/hovernet/{}/20.0/json/{}_{}.json'.format(filename,i,j)
+                            json_file = open(path)
+                            data = json.load(json_file)
+                            for i_nuc in data['nuc']:
+                                type_index = str(data['nuc'][i_nuc]['type'])
+                                nuc_type_key = color_dict[type_index][0]
+                                row[nuc_type_key] = row[nuc_type_key] + 1
+                        except:
+                            pass
+        except:
+            pass
 
             nuc_types_df = pd.concat([nuc_types_df, row], axis=0)
-        nuc_types_df.to_csv('/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types.csv', index=False, mode='a', header=False)
+        nuc_types_df.to_csv('/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types_full.csv', index=False, mode='a', header=False)
     return nuc_types_df
 
 # def main():
