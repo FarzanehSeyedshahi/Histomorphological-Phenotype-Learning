@@ -49,12 +49,11 @@ def get_color_dict():
 #                         pass
 
 
-def csv_from_json():
+def csv_from_json(csv_path, path_folder):
     color_dict = get_color_dict()
-    path_folder = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/'
     filenames_5x = os.listdir(path_folder)
 
-    nuc_types_df = pd.DataFrame(columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
+    nuc_types_df = pd.DataFrame()
     
     for filename in filenames_5x:
         try:
@@ -62,7 +61,7 @@ def csv_from_json():
             for tile in tiles:
                 start_i_5x, start_j_5x = tile.split('.jpeg')[0].split('_')
                 start_i, start_j = int(start_j_5x)*4, int(start_i_5x)*4
-                row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]], columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
+                row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]])
                 for i in range(start_i, start_i+4):
                     for j in range(start_j, start_j+4):
                         try:
@@ -75,16 +74,49 @@ def csv_from_json():
                                 row[nuc_type_key] = row[nuc_type_key] + 1
                         except:
                             pass
+                nuc_types_df = pd.concat([nuc_types_df, row], axis=0)
+            nuc_types_df.to_csv(csv_path, index=False, mode='a', header=False)
         except:
             pass
-
-            nuc_types_df = pd.concat([nuc_types_df, row], axis=0)
-        nuc_types_df.to_csv('/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types_full.csv', index=False, mode='a', header=False)
     return nuc_types_df
 
-# def main():
-#     nuc_types_df = csv_from_json()
-#     nuc_types_df.to_csv('/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types.csv', index=False)
+
+def merge_df_clusters(nuc_types_df, cluster_csv_path, path_folder):
+    filenames_5x = os.listdir(path_folder)   
+    # fetch clusters
+    clusters = pd.read_csv(cluster_csv_path)
+    clusters = clusters[['tiles', 'leiden_2.0', 'slides']]
+    clusters['slides'] = clusters['slides'].apply(lambda x: x+'_files') # add _files to the slides to match dictionary
+    clusters = clusters[clusters['slides'].isin(filenames_5x)] # filter out the slides that are in the dictionary
+
+
+    # merge the dataframes
+    df = nuc_types_df.merge(clusters, on=['slides', 'tiles'], how='inner')
+    print('Number of slides:',df['slides'].value_counts().shape[0])
+    df_path = cluster_csv_path.split('adatas')[0] + 'nuc_types_hovernet.csv'
+    df.to_csv(df_path, index=False)
+
+    plotting_dfs = df.drop('slides', axis=1)
+    plotting_dfs = plotting_dfs.groupby('leiden_2.0')
+    tiles_per_cluster = [len(plotting_dfs.get_group(i)) for i in plotting_dfs.groups]
+    plotting_dfs = plotting_dfs.sum()
+    plotting_dfs['tiles'] = tiles_per_cluster
+    plotting_dfs['mean_inflammation'] = plotting_dfs['inflammation']/plotting_dfs['tiles']
+    plotting_dfs['mean_necrosis'] = plotting_dfs['necrosis']/plotting_dfs['tiles']
+    plotting_dfs['mean_connective'] = plotting_dfs['connective']/plotting_dfs['tiles']
+    plotting_dfs = plotting_dfs.reset_index()
+    plotting_dfs.to_csv(cluster_csv_path.split('adatas')[0] + 'nuc_types_hovernet_clusters.csv', index=False)
+
+
+
+def main():
+    csv_path = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types_full.csv'
+    path_folder = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/'
+    cluster_csv_path = '/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/results/BarlowTwins_3/Meso/h224_w224_n3_zdim128/750K/adatas/Meso_he_complete_filtered_metadata_leiden_2p0__fold4.csv'
+    nuc_types_df = csv_from_json(csv_path, path_folder)
+    # nuc_types_df = pd.read_csv(csv_path)
+    nuc_types_df.columns = ['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe']
+    merge_df_clusters(nuc_types_df, cluster_csv_path, path_folder)
 
 
 def launch():
@@ -103,7 +135,9 @@ def launch():
 
 
     with executor.batch():
-        job = executor.submit(csv_from_json)
+        # job = executor.submit(csv_from_json)
+        job = executor.submit(main)
+
 	
     print(job.job_id)
     # print(job.result())
@@ -117,7 +151,7 @@ if __name__ == '__main__':
     parser.add_argument('--time', type=int, default=4300)
     parser.add_argument('--nodes', type=int, default=1)
     # parser.add_argument('--gpu_per_node', type=int, default=1 )
-    parser.add_argument('--slurm_mem', type=str, default='128G')
+    parser.add_argument('--slurm_mem', type=str, default='200G')
     # parser.add_argument('--num_cpus', type=int, default=4)
     parser.add_argument('--job_name', type=str, default='hovernetjson')
 
