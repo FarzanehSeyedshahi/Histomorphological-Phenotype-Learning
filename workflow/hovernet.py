@@ -53,15 +53,14 @@ def csv_from_json(csv_path, path_folder):
     color_dict = get_color_dict()
     filenames_5x = os.listdir(path_folder)
 
-    nuc_types_df = pd.DataFrame()
-    
+    nuc_types_df = pd.DataFrame(columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
     for filename in filenames_5x:
         try:
             tiles = os.listdir(path_folder + filename + '/5.0/')
             for tile in tiles:
                 start_i_5x, start_j_5x = tile.split('.jpeg')[0].split('_')
                 start_i, start_j = int(start_j_5x)*4, int(start_i_5x)*4
-                row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]])
+                row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]], columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
                 for i in range(start_i, start_i+4):
                     for j in range(start_j, start_j+4):
                         try:
