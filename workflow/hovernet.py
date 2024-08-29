@@ -11,13 +11,12 @@ warnings.filterwarnings("ignore")
 
 def get_color_dict():
     color_dict = {
-        "0" : ["nolabe", [0  ,   0,   0]], 
-        "1" : ["neoplastic", [255,   0,   0]], 
-        "2" : ["inflammation", [0  , 255,   0]], 
-        "3" : ["connective", [0  ,   0, 255]], 
-        "4" : ["necrosis", [255, 255,   0]], 
-        "5" : ["no-neo", [255, 165,   0]] 
-    }
+    "0" : ["nolabe", [0  ,   0,   0]], 
+    "1" : ["neopla", [255,   0,   0]], 
+    "2" : ["inflam", [0  , 255,   0]], 
+    "3" : ["connec", [0  ,   0, 255]], 
+    "4" : ["necros", [255, 255,   0]], 
+    "5" : ["no-neo", [255, 165,   0]] }
     return color_dict
 
 
@@ -53,14 +52,15 @@ def csv_from_json(csv_path, path_folder):
     color_dict = get_color_dict()
     filenames_5x = os.listdir(path_folder)
 
-    nuc_types_df = pd.DataFrame(columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
+    nuc_types_df = pd.DataFrame(columns=['slides', 'tiles', 'nolabe', 'neopla', 'inflam', 'connec', 'necros', 'no-neo'])
     for filename in filenames_5x:
         try:
             tiles = os.listdir(path_folder + filename + '/5.0/')
             for tile in tiles:
-                start_i_5x, start_j_5x = tile.split('.jpeg')[0].split('_')
-                start_i, start_j = int(start_j_5x)*4, int(start_i_5x)*4
-                row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]], columns=['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe'])
+                i_5x, j_5x = tile.split('.jpeg')[0].split('_')
+                i_5x, j_5x = int(i_5x), int(j_5x)
+                start_i, start_j = i_5x*4, j_5x*4
+                row = pd.DataFrame([[filename, tile, 0, 0, 0, 0, 0, 0]], columns=['slides', 'tiles', 'nolabe', 'neopla', 'inflam', 'connec', 'necros', 'no-neo'])
                 for i in range(start_i, start_i+4):
                     for j in range(start_j, start_j+4):
                         try:
@@ -72,11 +72,11 @@ def csv_from_json(csv_path, path_folder):
                                 nuc_type_key = color_dict[type_index][0]
                                 row[nuc_type_key] = row[nuc_type_key] + 1
                         except:
-                            pass
+                            continue
                 nuc_types_df = pd.concat([nuc_types_df, row], axis=0)
             nuc_types_df.to_csv(csv_path, index=False, mode='a', header=False)
         except:
-            pass
+            continue
     return nuc_types_df
 
 
@@ -92,7 +92,7 @@ def merge_df_clusters(nuc_types_df, cluster_csv_path, path_folder):
     # merge the dataframes
     df = nuc_types_df.merge(clusters, on=['slides', 'tiles'], how='inner')
     print('Number of slides:',df['slides'].value_counts().shape[0])
-    df_path = cluster_csv_path.split('adatas')[0] + 'nuc_types_hovernet.csv'
+    df_path = cluster_csv_path.split('adatas')[0] + 'nuc_types_hovernet_v2.csv'
     df.to_csv(df_path, index=False)
 
     plotting_dfs = df.drop('slides', axis=1)
@@ -104,16 +104,19 @@ def merge_df_clusters(nuc_types_df, cluster_csv_path, path_folder):
     plotting_dfs['mean_necrosis'] = plotting_dfs['necrosis']/plotting_dfs['tiles']
     plotting_dfs['mean_connective'] = plotting_dfs['connective']/plotting_dfs['tiles']
     plotting_dfs = plotting_dfs.reset_index()
-    plotting_dfs.to_csv(cluster_csv_path.split('adatas')[0] + 'nuc_types_hovernet_clusters.csv', index=False)
+    plotting_dfs.to_csv(cluster_csv_path.split('adatas')[0] + 'nuc_types_hovernet_clusters_v2.csv', index=False)
 
 
 
 def main():
-    csv_path = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types_full.csv'
+    csv_path = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/nuc_types_full_v2.csv'
     path_folder = '/nfs/home/users/fshahi/Projects/Datasets/large_ndpis/tiled/'
-    cluster_csv_path = '/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/results/BarlowTwins_3/Meso/h224_w224_n3_zdim128/750K/adatas/Meso_he_complete_filtered_metadata_leiden_2p0__fold4.csv'
+    cluster_csv_path = '/nfs/home/users/fshahi/Projects/Histomorphological-Phenotype-Learning/results/BarlowTwins_3/Meso/h224_w224_n3_zdim128/750K/adatas/Meso_he_complete_filtered_metadata_leiden_2p0__fold4_v2.csv'
     nuc_types_df = csv_from_json(csv_path, path_folder)
     # nuc_types_df = pd.read_csv(csv_path)
+    # drop the replicates
+    nuc_types_df = nuc_types_df.drop_duplicates()
+    nuc_types_df.to_csv(csv_path.replace('.csv', 'cleaned.csv'), index=False)
     nuc_types_df.columns = ['slides', 'tiles', 'necrosis', 'neoplastic', 'inflammation', 'connective', 'no-neo', 'nolabe']
     merge_df_clusters(nuc_types_df, cluster_csv_path, path_folder)
 
