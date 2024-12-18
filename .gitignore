@@ -28,6 +28,7 @@ mil/datasets/*
 
 MesoGraph/
 SpindleMesoNet/
+Infer_HPL/
 cluster_0/
 cluster_14/
 cluster_29/
@@ -46,6 +47,10 @@ scanpy.yml
 slideflow.log
 test.ipynb
 test.txt
-utilities/tile_cleaning/additional_dataset_review.ipynb
+*.html
+# utilities/tile_cleaning/additional_dataset_review.ipynb
 
 slurm_logs/*
+*.sh
+test.ipynb
+test*.py
