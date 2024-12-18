@@ -1,6 +1,5 @@
-# A histomorphological atlas of resected mesothelioma from 3446 whole-slide images discovered by self-supervised learning [Link](https://arxiv.org/abs/2205.01931)
-
-
+# A histomorphological atlas of resected mesothelioma from 3446 whole-slide images discovered by self-supervised learning ([bioRxiv](https://www.biorxiv.org/content/10.1101/2024.11.18.624103v1))
+---
 **Abstract:**
 
 *Mesothelioma is a highly lethal and poorly biologically understood disease which presents diagnostic challenges due to its morphological complexity. This study uses self-supervised AI (Artificial Intelligence) to map the histomorphological landscape of the disease. The resulting atlas consists of recurrent patterns identified from 3446 Hematoxylin and Eosin (H\&E) stained images scanned from resected tumour slides. These patterns generate highly interpretable predictions, achieving state-of-the-art performance with 0.65 concordance index (c-index) for outcomes and 85% AUC in subtyping. Their clinical relevance is endorsed by comprehensive human pathological assessment. Furthermore, we characterise the molecular underpinnings of these diverse, meaningful, predictive patterns. Our approach both improves diagnosis and deepens our understanding of mesothelioma biology, highlighting the power of this self-learning method in clinical applications and scientific discovery.*
@@ -14,7 +13,6 @@ Self-supervised model checkpoints - trained on LATTICe-M ([Link](https://drive.g
 Vector Representations ([Link](https://drive.google.com/file/d/1LFIaCGYslJjfgeN160x7HBhnI-4iLBft/view?usp=drive_link))
 
 ---
-
 ## Citation
 ```
 @article{seyedshahi2024histomorphological,
