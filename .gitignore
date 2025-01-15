@@ -12,10 +12,6 @@ files/*
 */.DS_Store
 utilities/files/indexes_to_remove/
 Transformers
-*.jpg
-*/*.jpg
-*/**/*.jpg
-*.png
 *__pycache__*
 *.pyc
 */__pycache__/*.pyc
@@ -38,19 +34,6 @@ data/
 deleted/
 figures/
 
-pkl_Meso.pkl
-projection.sh
-rapid.yml
 report_representationsleiden_samples_adata.py
-rsc_rapids_24.04.yml
-scanpy.yml
-slideflow.log
-test.ipynb
-test.txt
-*.html
-# utilities/tile_cleaning/additional_dataset_review.ipynb
-
 slurm_logs/*
 *.sh
-test.ipynb
-test*.py
