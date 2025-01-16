@@ -1,4 +1,4 @@
-# A histomorphological atlas of resected mesothelioma from 3446 whole-slide images discovered by self-supervised learning ([bioRxiv](https://www.biorxiv.org/content/10.1101/2024.11.18.624103v1))
+# A histomorphological atlas of resected mesothelioma from 3446 whole-slide images discovered by self-supervised learning ([bioRxiv](https://www.biorxiv.org/content/10.1101/2024.11.18.624103v2))
 ---
 **Abstract:**
 
