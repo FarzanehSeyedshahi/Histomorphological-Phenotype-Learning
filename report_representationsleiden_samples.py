@@ -14,9 +14,6 @@ parser.add_argument('--meta_folder',         dest='meta_folder',         type=st
 parser.add_argument('--meta_field',          dest='meta_field',          type=str,            default=None,                   help='Meta field to use for the Logistic Regression or Cox event indicator.')
 parser.add_argument('--matching_field',      dest='matching_field',      type=str,            default=None,                   help='Key used to match folds split and H5 representation file.')
 parser.add_argument('--resolution',          dest='resolution',          type=float,          default=None,                   help='Minimum number of tiles per matching_field.')
-parser.add_argument('--meta_field',          dest='meta_field',          type=str,            default=None,                   help='Meta field to use for the Logistic Regression or Cox event indicator.')
-parser.add_argument('--matching_field',      dest='matching_field',      type=str,            default=None,                   help='Key used to match folds split and H5 representation file.')
-parser.add_argument('--resolution',          dest='resolution',          type=float,          default=None,                   help='Minimum number of tiles per matching_field.')
 parser.add_argument('--dpi',                 dest='dpi',                 type=int,            default=1000,                   help='Highest quality: 1000.')
 parser.add_argument('--fold',                dest='fold',                type=int,            default=0,                      help='Minimum number of tiles per matching_field.')
 parser.add_argument('--dataset',             dest='dataset',             type=str,            default='TCGAFFPE_LUADLUSC_5x', help='Dataset to use.')
@@ -102,8 +99,6 @@ groupby = 'leiden_%s' % resolution
 
 # Dataset images.
 data = Data(dataset=dataset, marker=marker, patch_h=image_height, patch_w=image_width, n_channels=image_channels, batch_size=64, project_path=dbs_path, load=True)
-print('Loaded dataset: %s' % data)
-print('Loaded dataset: %s' % data)
 # Dump cluster images.
 if tile_img:
     plot_cluster_images(groupby, meta_folder, data, fold, h5_complete_path, dpi, value_cluster_ids, extensive=extensive)

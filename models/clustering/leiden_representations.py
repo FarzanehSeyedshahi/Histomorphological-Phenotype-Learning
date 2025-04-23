@@ -209,8 +209,8 @@ def run_clustering(frame, dim_columns, rest_columns, resolution, groupby, n_neig
 
 	# Leiden clustering.
 	print('%sLeiden' % tabs, resolution)
-	# sc.tl.leiden(adata, resolution=resolution, key_added=groupby, neighbors_key='nn_leiden')
-	rsc.tl.leiden(adata, resolution=resolution, key_added=groupby, neighbors_key='nn_leiden')
+	sc.tl.leiden(adata, resolution=resolution, key_added=groupby, neighbors_key='nn_leiden')
+	# rsc.tl.leiden(adata, resolution=resolution, key_added=groupby, neighbors_key='nn_leiden')
 	print('Clusters found!')
 
 	# Save to csv.

@@ -501,8 +501,7 @@ def sample_representation(frame_classification, matching_field, sample, groupby,
 	samples_features = [0]*len(leiden_clusters)
 	# Get cluster counts for sample.
 	clusters_slide, clusters_counts = np.unique(frame_classification[frame_classification[matching_field]==sample][groupby], return_counts=True)
-	print('Clusters:', clusters_slide)
-	print('Counts:', clusters_counts)
+
 	
 	# Map to vector representation dimensions.
 	for clust_id, count in zip(clusters_slide, clusters_counts):

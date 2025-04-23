@@ -22,6 +22,7 @@ class Data:
 
 
         self.hdf5_train = os.path.join(self.pathes_path, 'hdf5_%s_train.h5' % self.dataset_name)
+        print(self.hdf5_train)
         self.training = None
         if os.path.isfile(self.hdf5_train) and load:
             self.training = Dataset(self.hdf5_train, patch_h, patch_w, n_channels, batch_size=batch_size, thresholds=thresholds, labels=labels, empty=empty, num_clusters=num_clusters, clust_percent=clust_percent)

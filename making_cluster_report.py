@@ -90,8 +90,7 @@ if __name__ == "__main__":
     resolution = '2p0'
     meta_folder = '750K'
     fold = 4
-    dataset = 'Meso'
-    'results/BarlowTwins_3/Meso/h224_w224_n3_zdim128/750K/leiden_2p0_fold4/'
+    dataset = 'acmeso'
 
 
     images_folder = "{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/{}/leiden_{}_fold{}/images/".format(main_path, dataset, meta_folder, resolution, fold)
