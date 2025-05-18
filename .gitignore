@@ -33,6 +33,14 @@ cluster_31/
 data/
 deleted/
 figures/
+*/*/*/results
+**/*.npy
+results copy/
+log-files/
+files_bc/
+.vscode/
+workflow/mil/data
+workflow/mil/results
 
 report_representationsleiden_samples_adata.py
 slurm_logs/*
