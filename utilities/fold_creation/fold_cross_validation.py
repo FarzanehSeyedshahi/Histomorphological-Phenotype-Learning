@@ -276,10 +276,10 @@ def create_csv_tcga(patient_csv, representation_csv, csv_results_path):
 
 if __name__ == '__main__':
     main_path = '/mnt/cephfs/sharedscratch/users/fshahi/Projects/Histomorphological-Phenotype-Learning'
-    dataset = 'Meso'
-    csv_results_path = '{}/files/csv_{}_he_complete_filtered.csv'.format(main_path, dataset)
-    pkl_results_path = '{}/files/pkl_{}_he_test_train_slides.pkl'.format(main_path, dataset)
-    h5_complete_path   = '{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/hdf5_{}_he_complete_filtered.h5'.format(main_path, dataset, dataset)
+    dataset = 'acmeso'
+    csv_results_path = '{}/files/csv_{}_he_complete.csv'.format(main_path, dataset)
+    pkl_results_path = '{}/files/pkl_{}_slides.pkl'.format(main_path, dataset)
+    h5_complete_path   = '{}/results/BarlowTwins_3/{}/h224_w224_n3_zdim128/hdf5_{}_he_complete.h5'.format(main_path, dataset, dataset)
 
     # representation_csv='{}/files/csv_{}_he_complete_filtered.csv'.format(main_path, dataset)
     # patient_csv='{}/files/TCGA_files/clinical_TCGA_clean.csv'.format(main_path)
@@ -307,7 +307,7 @@ if __name__ == '__main__':
         df_representations = pd.read_csv(csv_results_path)
 
     # add sample slide column
-    folds       = get_folds(df_representations, matching_field='samples', ind_column='case_Id', num_folds=5, valid_set=False)
+    folds       = get_folds(df_representations, matching_field='slides', ind_column='case_Id', num_folds=5, valid_set=False)
 
     final_folds = fit_format(folds)
 
