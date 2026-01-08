@@ -1,5 +1,5 @@
 # A histomorphological atlas of resected mesothelioma from 3446 whole-slide images discovered by self-supervised learning ([Nature Communications](https://www.nature.com/articles/s41467-025-63846-9))
-This work was selected as an **Editor Highlight** by *Nature Communications*, ([Cancer Collection](https://www.nature.com/collections/aahajfhafc)
+This work was selected as an **Editor Highlight** by *Nature Communications*, ([Cancer Collection](https://www.nature.com/collections/aahajfhafc))
 
 ---
 **Abstract:**
